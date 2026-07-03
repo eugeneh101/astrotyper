@@ -20,8 +20,9 @@
 # production
 /build
 
-# virtual env
+# python
 .venv
+*__pycache__/*
 
 # misc
 .DS_Store
