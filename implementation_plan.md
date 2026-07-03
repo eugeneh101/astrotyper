@@ -67,11 +67,16 @@ We will build this entirely within a single repository optimized for Vercel's fr
 *   **Critical Shield States & Dynamic Integrity:** As the player's health drops from 100% to 25%, the shield ring physically shrinks (from 5px to 1px) and its color smoothly interpolates from Cyan to Yellow to Orange. When health drops below 25%, a critical warning state triggers: the screen edges pulse with a red vignette, and a glowing, glitching red sphere renders around the player ship.
 *   **Game Over Physics & Cinematic Death:** When the player dies, a massive cinematic `PlayerDeathExplosion` is triggered, featuring expanding shockwaves, dark smoke clouds, high-velocity shrapnel sparks, and shattered hull debris that spins into the void. Enemies immediately detach, lose their UI/exhaust elements, and coast downward along their last known trajectory vectors.
 
-### Phase 4: The Zero-Latency Narrative Loop (Integration)
-*   Build the overarching React container (`<Game />`).
-*   Implement the WPM Calculator.
-*   Implement the **70% Trigger Logic**: When the player reaches 70% of the current text wave, React asynchronously fetches the next story segment from the Python backend without pausing the Canvas loop.
-*   Implement the End Screen cinematic scroll and the `.txt` download blob.
+### Phase 4: The Zero-Latency Narrative Loop & Backend Security (Integration)
+*   **Backend Security Mitigations (STRIDE):**
+    *   **Rate Limiting:** Implement a lightweight IP-based rate limiter on the `/api/generate` endpoint to protect the Gemini API quota from DoS attacks.
+    *   **Input Validation:** Implement strict Pydantic `Field` boundaries (e.g., max lengths for `story_so_far`, reasonable int bounds for `player_wpm`) to prevent prompt tampering.
+    *   **Error Sanitization:** Catch explicit exceptions in `api/index.py` and return generic, safe error messages to the client rather than exposing raw stack traces.
+*   **Frontend Integration:**
+    *   Build the overarching React container (`<Game />`).
+    *   Implement the WPM Calculator.
+    *   Implement the **70% Trigger Logic**: When the player reaches 70% of the current text wave, React asynchronously fetches (`fetch('/api/generate')`) the next story segment from the Python backend without pausing the Canvas loop.
+    *   Implement the End Screen cinematic scroll and the `.txt` download blob.
 
 ### Phase 5: Polish and The Browser Subagent QA
 *   Inject the epic CSS design system (neon glowing text, retro-futuristic UI elements).
@@ -82,4 +87,7 @@ We will build this entirely within a single repository optimized for Vercel's fr
 ---
 
 ## Open Questions
-*   None at this time. The mechanics, narrative structure, and architecture are entirely locked in. We are ready to code.
+*   **Rate Limiting Architecture:** For the IP-based rate limiting on Vercel Serverless, we have two options:
+    1.  **In-Memory Dictionary (Fast/Free):** A simple Python dictionary tracking IPs. It is slightly leaky (because Vercel spins up multiple parallel serverless instances that don't share memory), but it requires zero setup and effectively stops massive single-instance abuse.
+    2.  **Upstash Redis / Vercel KV (Robust):** True global rate limiting. It requires you to click a few buttons in your Vercel Dashboard to enable Vercel KV or Upstash, and then pass me the connection string.
+    *Which route would you prefer for the MVP?*
