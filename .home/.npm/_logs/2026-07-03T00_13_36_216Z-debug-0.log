@@ -1,0 +1,43 @@
+0 verbose cli /Users/eugenehuang/.nvm/versions/node/v24.14.1/bin/node /Users/eugenehuang/.nvm/versions/node/v24.14.1/lib/node_modules/npm/bin/npm-cli.js
+1 info using npm@11.11.0
+2 info using node@v24.14.1
+3 silly config load:file:/Users/eugenehuang/.nvm/versions/node/v24.14.1/lib/node_modules/npm/npmrc
+4 silly config load:file:/Users/eugenehuang/Desktop/type-your-adventure-antigravity/.npmrc
+5 silly config load:file:/Users/eugenehuang/Desktop/type-your-adventure-antigravity/.home/.npmrc
+6 silly config load:file:/Users/eugenehuang/.nvm/versions/node/v24.14.1/etc/npmrc
+7 verbose title npm exec create-next-app@latest ./ --typescript --eslint --app --src-dir --import-alias @/* --use-npm --tailwind false --yes
+8 verbose argv "exec" "--yes" "--" "create-next-app@latest" "./" "--typescript" "--eslint" "--app" "--src-dir" "--import-alias" "@/*" "--use-npm" "--tailwind" "false" "--yes"
+9 verbose logfile logs-max:10 dir:/Users/eugenehuang/Desktop/type-your-adventure-antigravity/.home/.npm/_logs/2026-07-03T00_13_36_216Z-
+10 verbose logfile /Users/eugenehuang/Desktop/type-your-adventure-antigravity/.home/.npm/_logs/2026-07-03T00_13_36_216Z-debug-0.log
+11 silly logfile done cleaning log files
+12 silly packumentCache heap:4496293888 maxSize:1124073472 maxEntrySize:562036736
+13 http fetch GET https://registry.npmjs.org/npm attempt 1 failed with ENOTFOUND
+14 http fetch GET https://registry.npmjs.org/create-next-app attempt 1 failed with ENOTFOUND
+15 http fetch GET https://registry.npmjs.org/npm attempt 2 failed with ENOTFOUND
+16 http fetch GET https://registry.npmjs.org/create-next-app attempt 2 failed with ENOTFOUND
+17 http fetch GET https://registry.npmjs.org/npm attempt 3 failed with ENOTFOUND
+18 http fetch GET https://registry.npmjs.org/create-next-app attempt 3 failed with ENOTFOUND
+19 verbose type system
+20 verbose stack FetchError: request to https://registry.npmjs.org/create-next-app failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+20 verbose stack     at ClientRequest.<anonymous> (/Users/eugenehuang/.nvm/versions/node/v24.14.1/lib/node_modules/npm/node_modules/minipass-fetch/lib/index.js:130:14)
+20 verbose stack     at ClientRequest.emit (node:events:508:28)
+20 verbose stack     at emitErrorEvent (node:_http_client:108:11)
+20 verbose stack     at _destroy (node:_http_client:963:9)
+20 verbose stack     at onSocketNT (node:_http_client:983:5)
+20 verbose stack     at process.processTicksAndRejections (node:internal/process/task_queues:91:21)
+21 error code ENOTFOUND
+22 error syscall getaddrinfo
+23 error errno ENOTFOUND
+24 error network request to https://registry.npmjs.org/create-next-app failed, reason: getaddrinfo ENOTFOUND registry.npmjs.org
+25 error network This is a problem related to network connectivity.
+25 error network In most cases you are behind a proxy or have bad network settings.
+25 error network
+25 error network If you are behind a proxy, please make sure that the
+25 error network 'proxy' config is set properly.  See: 'npm help config'
+26 verbose cwd /Users/eugenehuang/Desktop/type-your-adventure-antigravity
+27 verbose os Darwin 25.5.0
+28 verbose node v24.14.1
+29 verbose npm  v11.11.0
+30 verbose exit 1
+31 verbose code 1
+32 error A complete log of this run can be found in: /Users/eugenehuang/Desktop/type-your-adventure-antigravity/.home/.npm/_logs/2026-07-03T00_13_36_216Z-debug-0.log
