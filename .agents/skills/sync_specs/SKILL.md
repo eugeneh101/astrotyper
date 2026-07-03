@@ -1,5 +1,5 @@
 ---
-name: Sync Specs
+name: sync-specs
 description: Analyzes recent code changes and updates the game_design_spec.md, implementation_plan.md, and task.md to ensure the documentation stays perfectly synchronized with the actual implementation. Summarizes all changes made.
 ---
 

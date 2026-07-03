@@ -3,12 +3,27 @@
 - `[x]` Scaffold Next.js project
 - `[x]` Set up Python API backend for Vercel
 - `[x]` Build the ADK Game Master Agent
-- `[x]` Build the Game Engine (Canvas, Top-Down 2D Starfield)
-- `[x]` Implement Combat Loop (Typing mechanics, homing missiles)
-- `[x]` Phase 3.5: Visual & Animation Overhaul
-- `[ ]` Implement Zero-Latency Background Prefetching
-- `[ ]` Final UI/UX Polish (Strategic RPG aesthetics)
+- `[x]` Phase 4: Zero-Latency Narrative Loop & Backend Security
+  - `[x]` Backend Security (IP rate limiting, Pydantic bounds, Error sanitization)
+  - `[x]` React frontend `<Game />` wrapper integration
+  - `[x]` WPM Calculation & 70% Background Prefetch trigger
+  - `[x]` End Screen Cinematic and .txt download
+- `[x]` Implement Static Line-Based Text Box wrapping
+- `[x]` Implement Shooter enemy archetype mechanics and visuals
+- `[x]` Fix requestAnimationFrame deltaTime tab-switching bug
+- `[x]` Phase 3.6: Cinematic Boss Level Environments (Accretion Vortex & Ripples)
+- `[x]` Phase 3.7: Native Bot Mode for Automated Playtesting
+- `[x]` Phase 5: UI Polish (Text Box Progress Fill)
+- `[ ]` Phase 5: Final UI/UX Polish (Strategic RPG aesthetics)
+- `[x]` Phase 3.8: The Final Encounter (Boss Level)
+  - `[x]` Decouple Enemy spawning and implement Boss health/damage routing
+  - `[x]` Overcharge Deflector Shield mechanics and UI
+  - `[x]` Cybernetic Dreadnought (Visuals, Core Laser, Turret Bullet Hell)
+  - `[x]` Abyssal Bio-Entity (Visuals, Spinning Danmaku)
+  - `[x]` Abyssal Bio-Entity: 3 distinct strafing patterns
+  - `[x]` Abyssal Bio-Entity: Spaghettification death sequence
+  - `[x]` Abyssal Bio-Entity: QTE Laser Beam Attack
+  - `[x]` Cinematic Death Blossom Finisher
 - `[ ]` Stretch Goal: End Screen Text-to-Speech (TTS)
-- `[ ]` Stretch Goal: Sound Effects and Background Music
-- `[ ]` Stretch Goal: Auto-dodging ship movement based on combo
+- `[ ]` Stretch Goal: Sound Effects / BGM
 - `[ ]` Stretch Goal: Log important game play metrics

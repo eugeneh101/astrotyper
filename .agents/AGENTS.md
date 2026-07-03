@@ -24,3 +24,6 @@ Welcome to the Type Your Adventure codebase. This project follows strict Agentic
 
 ## 5. Do Not "Vibe Code"
 *   Do not dump 1000 lines of code into a single file and hope it works. Break components down, verify them incrementally, and keep the architecture pristine.
+
+## 6. Code Style
+*   **Python Named Parameters:** When calling custom Python functions (not built-ins), always use named parameters (keyword arguments) rather than positional arguments. This improves readability and maintainability.

@@ -7,17 +7,41 @@ export class Enemy {
     hitShield: boolean = false;
     typedChars: number = 0; // How many characters of this word have been typed
     angle: number = 0;
-    startIndex: number; // Where this word begins in the global string
+    type: 'kamikaze' | 'shooter' | 'boss_target' | 'mini_bio' = 'kamikaze';
+    targetStopY: number = 0;
+    strafePhase: number = 0;
+    strafeSpeed: number = 100;
+    chargeTime: number = 0;
+    maxChargeTime: number = 8;
+    hasFiredCharge: boolean = false;
+    laserAlpha: number = 0;
+    scatterParticles: {x: number, y: number, vx: number, vy: number, life: number, color: string}[] = [];
 
-    constructor(x: number, y: number, word: string, speed: number, startIndex: number) {
+    constructor(x: number, y: number, word: string, speed: number, startIndex: number, type: 'kamikaze' | 'shooter' | 'boss_target' | 'mini_bio' = 'kamikaze') {
         this.x = x;
         this.y = y;
         this.word = word;
         this.speed = speed;
         this.startIndex = startIndex;
+        this.type = type;
+        if (this.type === 'shooter') {
+            this.targetStopY = 100 + Math.random() * 150;
+            this.strafePhase = Math.random() * Math.PI * 2;
+        }
     }
 
     update(dt: number, targetX: number, targetY: number, playerIsDead: boolean = false) {
+        // Update particles
+        for (let i = this.scatterParticles.length - 1; i >= 0; i--) {
+            const p = this.scatterParticles[i];
+            p.x += p.vx * dt;
+            p.y += p.vy * dt;
+            p.life -= dt;
+            if (p.life <= 0) {
+                this.scatterParticles.splice(i, 1);
+            }
+        }
+
         if (playerIsDead) {
             this.hitShield = false;
             // Continue flying along the last known trajectory!
@@ -34,23 +58,67 @@ export class Enemy {
         // Record angle so the ship can be drawn facing the player
         this.angle = Math.atan2(dy, dx) - Math.PI / 2; // -90 deg offset because sprite natively points "down"
 
-        // Shield radius is 80. The enemy's nose extends 15px forward from its center.
-        // So they should collide when their center is 95px away.
-        if (dist < 95 && !this.hitShield) { 
-            this.hitShield = true;
-            // DO NOT DIE YET! The player must still type the word to destroy this leech.
+        if (this.type === 'boss_target') {
+            // Boss targets don't move towards the player, they are purely visual text markers.
+            return;
         }
 
-        if (!this.hitShield) {
-            const moveX = (dx / dist) * this.speed * dt;
-            const moveY = (dy / dist) * this.speed * dt;
-            
-            this.x += moveX;
-            this.y += moveY;
-        } else {
-            // Stick to the shield outer edge
-            this.x = targetX - (dx / dist) * 95;
-            this.y = targetY - (dy / dist) * 95;
+        if (this.type === 'kamikaze' || this.type === 'mini_bio') {
+            // Shield radius is 80. The enemy's nose extends 15px forward from its center.
+            // So they should collide when their center is 95px away.
+            if (dist < 95 && !this.hitShield) { 
+                this.hitShield = true;
+                // DO NOT DIE YET! The player must still type the word to destroy this leech.
+            }
+
+            if (!this.hitShield) {
+                const moveX = (dx / dist) * this.speed * dt;
+                const moveY = (dy / dist) * this.speed * dt;
+                
+                this.x += moveX;
+                this.y += moveY;
+            } else {
+                // Stick to the shield outer edge
+                this.x = targetX - (dx / dist) * 95;
+                this.y = targetY - (dy / dist) * 95;
+            }
+        } else if (this.type === 'shooter') {
+            if (this.y < this.targetStopY) {
+                // Move straight down until stop point
+                this.y += this.speed * dt;
+            } else {
+                // Strafe
+                this.strafePhase += dt;
+                this.x += Math.sin(this.strafePhase) * this.strafeSpeed * dt;
+                
+                // Charge Attack
+                this.chargeTime += dt;
+                if (this.chargeTime >= this.maxChargeTime) {
+                    this.hasFiredCharge = true;
+                    this.chargeTime = 0; // Reset as requested to keep punishing player
+                    this.laserAlpha = 1.0;
+                }
+                
+                if (this.laserAlpha > 0) {
+                    this.laserAlpha -= dt * 2.0;
+                    if (this.laserAlpha < 0) this.laserAlpha = 0;
+                }
+                
+                // Spawn scatter shots occasionally
+                if (Math.random() < 0.1) { // approx 6 per second
+                    const speed = 150 + Math.random() * 200;
+                    const angleOffset = (Math.random() - 0.5) * Math.PI; // Random forward cone
+                    const spawnAngle = this.angle + Math.PI/2 + angleOffset;
+                    this.scatterParticles.push({
+                        x: 0,
+                        y: 0,
+                        vx: Math.cos(spawnAngle) * speed,
+                        vy: Math.sin(spawnAngle) * speed,
+                        life: 1.0,
+                        color: Math.random() > 0.5 ? '#ff0055' : '#ffaa00'
+                    });
+                }
+            }
         }
     }
 
@@ -58,49 +126,207 @@ export class Enemy {
         ctx.save();
         ctx.translate(this.x, this.y);
         
+        // Draw scatter particles before rotation (since their vx/vy are already world-angled)
+        ctx.save();
+        for (const p of this.scatterParticles) {
+            ctx.globalAlpha = p.life;
+            ctx.fillStyle = p.color;
+            ctx.shadowBlur = 10;
+            ctx.shadowColor = p.color;
+            ctx.beginPath();
+            ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
+            ctx.fill();
+        }
+        ctx.restore();
+        
         // Stylized multi-layered geometric polygon, rotated to face player
         ctx.save();
         ctx.rotate(this.angle);
-        ctx.shadowBlur = 15;
-        ctx.shadowColor = '#ff0055';
         
-        // Outer chassis (Dreadnought shape)
-        ctx.beginPath();
-        ctx.moveTo(0, 20); // nose
-        ctx.lineTo(10, 5); // right shoulder
-        ctx.lineTo(25, 10); // right wing tip forward
-        ctx.lineTo(25, -15); // right wing tip back
-        ctx.lineTo(8, -10); // right wing inner back
-        ctx.lineTo(5, -20); // right engine block
-        ctx.lineTo(-5, -20); // left engine block
-        ctx.lineTo(-8, -10); // left wing inner back
-        ctx.lineTo(-25, -15); // left wing tip back
-        ctx.lineTo(-25, 10); // left wing tip forward
-        ctx.lineTo(-10, 5); // left shoulder
-        ctx.closePath();
-        ctx.fillStyle = '#0d0514'; // Dark sleek metal
-        ctx.fill();
-        ctx.strokeStyle = '#ff0055';
-        ctx.lineWidth = 2;
-        ctx.stroke();
+        if (this.type === 'shooter' && this.laserAlpha > 0) {
+            // Draw massive laser beam
+            ctx.save();
+            ctx.globalAlpha = this.laserAlpha;
+            ctx.beginPath();
+            ctx.moveTo(-10, 0);
+            ctx.lineTo(-15, 1000);
+            ctx.lineTo(15, 1000);
+            ctx.lineTo(10, 0);
+            ctx.closePath();
+            
+            const grad = ctx.createLinearGradient(0, 0, 0, 800);
+            grad.addColorStop(0, '#ffffff');
+            grad.addColorStop(0.2, '#ffaa00');
+            grad.addColorStop(1, 'rgba(255, 0, 85, 0)');
+            
+            ctx.fillStyle = grad;
+            ctx.shadowBlur = 30;
+            ctx.shadowColor = '#ff0055';
+            ctx.fill();
+            ctx.restore();
+        }
 
-        // Cockpit window / glowing core
-        ctx.beginPath();
-        ctx.moveTo(0, 5);
-        ctx.lineTo(-5, -5);
-        ctx.lineTo(5, -5);
-        ctx.closePath();
-        ctx.fillStyle = '#ff0055';
-        ctx.fill();
+        ctx.shadowBlur = 15;
         
-        // Wing glowing vents
-        ctx.beginPath();
-        ctx.arc(15, -5, 2.5, 0, Math.PI * 2);
-        ctx.arc(-15, -5, 2.5, 0, Math.PI * 2);
-        ctx.fill(); // Re-use the #ff0055 fill
+        if (this.type === 'kamikaze') {
+            ctx.shadowColor = '#ff0055';
+            
+            // Outer chassis (Dreadnought shape)
+            ctx.beginPath();
+            ctx.moveTo(0, 20); // nose
+            ctx.lineTo(10, 5);
+            ctx.lineTo(25, 10);
+            ctx.lineTo(25, -15);
+            ctx.lineTo(8, -10);
+            ctx.lineTo(5, -20);
+            ctx.lineTo(-5, -20);
+            ctx.lineTo(-8, -10);
+            ctx.lineTo(-25, -15);
+            ctx.lineTo(-25, 10);
+            ctx.lineTo(-10, 5);
+            ctx.closePath();
+            ctx.fillStyle = '#0d0514'; // Dark sleek metal
+            ctx.fill();
+            ctx.strokeStyle = '#ff0055';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+
+            // Cockpit window / glowing core
+            ctx.beginPath();
+            ctx.moveTo(0, 5);
+            ctx.lineTo(-5, -5);
+            ctx.lineTo(5, -5);
+            ctx.closePath();
+            ctx.fillStyle = '#ff0055';
+            ctx.fill();
+            
+            // Wing glowing vents
+            ctx.beginPath();
+            ctx.arc(15, -5, 2.5, 0, Math.PI * 2);
+            ctx.arc(-15, -5, 2.5, 0, Math.PI * 2);
+            ctx.fill(); 
+        } else if (this.type === 'mini_bio') {
+            // Organic, writhing mini kamikaze
+            ctx.shadowColor = '#00ff44';
+            
+            // Fleshy body
+            ctx.beginPath();
+            ctx.arc(0, 0, 15, 0, Math.PI * 2);
+            ctx.fillStyle = '#0a1a0d';
+            ctx.fill();
+            
+            ctx.strokeStyle = '#00ff44';
+            ctx.lineWidth = 2;
+            
+            // Wavy tentacles
+            const time = performance.now() / 150;
+            for (let i = 0; i < 4; i++) {
+                ctx.beginPath();
+                ctx.moveTo(0, -10);
+                ctx.quadraticCurveTo(
+                    15 * Math.sin(time + i), -25, 
+                    20 * Math.sin(time + i*2), -35
+                );
+                ctx.stroke();
+            }
+            
+            // Glowing core
+            ctx.beginPath();
+            ctx.arc(0, 5, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#ffaa00';
+            ctx.fill();
+            ctx.stroke();
+            
+        } else if (this.type === 'shooter') {
+            // SHOOTER CHASSIS - Heavy Stealth Bomber / Gunship Design
+            ctx.shadowColor = '#b700ff';
+            
+            // Angular stealth shape
+            ctx.beginPath();
+            ctx.moveTo(8, 10); // Left of the center inset
+            ctx.lineTo(15, -5); // Right inner cheek
+            ctx.lineTo(40, 15); // Right wing forward point
+            ctx.lineTo(25, -20); // Right wing back point
+            ctx.lineTo(10, -10); // Right shoulder
+            ctx.lineTo(5, -25); // Right engine block
+            ctx.lineTo(-5, -25); // Left engine block
+            ctx.lineTo(-10, -10); // Left shoulder
+            ctx.lineTo(-25, -20); // Left wing back point
+            ctx.lineTo(-40, 15); // Left wing forward point
+            ctx.lineTo(-15, -5); // Left inner cheek
+            ctx.lineTo(-8, 10); // Right of the center inset
+            ctx.lineTo(0, 2); // Center inset point
+            ctx.closePath();
+            
+            ctx.fillStyle = '#0a0512'; // Pitch black / deep void
+            ctx.fill();
+            ctx.strokeStyle = '#b700ff'; // Aggressive neon purple
+            ctx.lineWidth = 2.5;
+            ctx.stroke();
+
+            // Inner armor plating
+            ctx.beginPath();
+            ctx.moveTo(0, -2);
+            ctx.lineTo(10, -12);
+            ctx.lineTo(0, -20);
+            ctx.lineTo(-10, -12);
+            ctx.closePath();
+            ctx.fillStyle = '#220044';
+            ctx.fill();
+            ctx.strokeStyle = '#7700ff';
+            ctx.lineWidth = 1;
+            ctx.stroke();
+            
+            // Cockpit (sinister glowing orange slit)
+            ctx.beginPath();
+            ctx.moveTo(-12, -7);
+            ctx.lineTo(12, -7);
+            ctx.lineTo(8, -4);
+            ctx.lineTo(-8, -4);
+            ctx.closePath();
+            ctx.fillStyle = '#ffaa00';
+            ctx.fill();
+            
+            // Charge Indicator Orb (nestled in the mandibles)
+            if (!isGameOver) {
+                const chargeRatio = this.chargeTime / this.maxChargeTime;
+                
+                // Pulsing math
+                const pulse = Math.sin(Date.now() / 80) * 0.15;
+                
+                ctx.beginPath();
+                ctx.arc(0, 15, 4 + (chargeRatio * 14), 0, Math.PI * 2);
+                ctx.fillStyle = `rgba(255, 60, 0, ${0.4 + (chargeRatio * 0.6) + pulse})`;
+                ctx.shadowBlur = 15 + (chargeRatio * 40);
+                ctx.shadowColor = '#ff2200';
+                ctx.fill();
+                
+                // Super hot core
+                ctx.beginPath();
+                ctx.arc(0, 15, 1 + (chargeRatio * 6), 0, Math.PI * 2);
+                ctx.fillStyle = '#ffffff';
+                ctx.shadowBlur = 0;
+                ctx.fill();
+                
+                // Draw a targeting laser sight
+                ctx.beginPath();
+                ctx.moveTo(0, 25);
+                ctx.lineTo(0, 800);
+                ctx.strokeStyle = `rgba(255, 0, 50, ${0.15 + chargeRatio * 0.6})`;
+                ctx.lineWidth = 1 + (chargeRatio * 4);
+                ctx.setLineDash([5, Math.max(2, 25 - (chargeRatio * 23))]); // Dashes speed up as it charges
+                ctx.stroke();
+                ctx.setLineDash([]);
+            }
+        }
         
-        // Exhaust trail (flickers) - ONLY if game is active
-        if (!isGameOver) {
+        // Exhaust trail (flickers) - ONLY if game is active and not a boss target
+        if (!isGameOver && this.type !== 'boss_target') {
+            if (this.type === 'mini_bio') {
+                ctx.shadowColor = '#00ff44';
+            } else {
+                ctx.shadowColor = this.type === 'kamikaze' ? '#ff0055' : '#aa00ff';
+            }
             ctx.beginPath();
             ctx.moveTo(-5, -20);
             ctx.lineTo(0, -40 - Math.random() * 20);
@@ -131,19 +357,24 @@ export class Enemy {
             
             const startX = -fullWidth / 2;
 
+            // Highlight box if active
+            if (isActive) {
+                // Solid dark background to ensure readability over boss tentacles
+                ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
+                ctx.fillRect(startX - 4, 15, fullWidth + 8, 25);
+                
+                // Cyan border
+                ctx.strokeStyle = 'rgba(0, 255, 204, 0.8)';
+                ctx.lineWidth = 2;
+                ctx.strokeRect(startX - 4, 15, fullWidth + 8, 25);
+            }
+            
             ctx.fillStyle = '#00ffcc'; // typed is green
             ctx.fillText(typedPart, startX, 35);
             
             // Active word is bright white, inactive is dark grey
             ctx.fillStyle = isActive ? '#ffffff' : '#666666';
             ctx.fillText(untypedPart, startX + typedWidth, 35);
-
-            // Highlight box if active
-            if (isActive) {
-                ctx.strokeStyle = 'rgba(0, 255, 204, 0.4)';
-                ctx.lineWidth = 2;
-                ctx.strokeRect(startX - 4, 15, fullWidth + 8, 25);
-            }
         }
 
         ctx.restore();

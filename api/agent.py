@@ -36,7 +36,7 @@ ARCHETYPES = [
 ]
 
 def get_target_words(wpm: int) -> int:
-    """Calculate the target word count for the next round based on WPM."""
+    """Calculate the target word count for the next level based on WPM."""
     if wpm < 40:
         return 45
     elif wpm < 70:
@@ -46,14 +46,18 @@ def get_target_words(wpm: int) -> int:
     else:
         return 120
 
-def generate_narrative(story_so_far: str, player_health: int, player_wpm: int, current_round: int) -> GameMasterResponse:
+from dotenv import load_dotenv
+load_dotenv(".env.local")
+
+def generate_narrative(story_so_far: str, player_health: int, player_wpm: int, current_level: int) -> GameMasterResponse:
     # Initialize the Gemini Client
-    client = genai.Client(api_key=os.environ.get("GEMINI_API_KEY"))
-    model_name = os.environ.get("GEMINI_MODEL", "gemini-2.5-pro")
+    client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    model_name = os.environ["GEMINI_MODEL"]
 
     system_prompt = (
         "You are a gritty, epic sci-fi narrator. You must strictly output JSON matching the provided schema. "
-        "NEVER break the 4th wall. NEVER reference the player typing, WPM, rounds, or game mechanics."
+        "NEVER break the 4th wall. NEVER reference the player typing, WPM, rounds, or game mechanics. "
+        "CRITICAL: You MUST use ONLY standard ASCII characters. Do NOT use smart quotes (‘, ’, “, ”), em-dashes (—), or any non-ASCII typography. Use standard straight single quotes (') and double quotes (\")."
     )
 
     prompt = ""
@@ -65,8 +69,8 @@ def generate_narrative(story_so_far: str, player_health: int, player_wpm: int, c
             "The protagonist has just suffered a fatal blow and died. Generate a 2-sentence tragic ending "
             "based on the context of their death. Return a single branch."
         )
-    # 2. Main Menu (Round 1 Hooks)
-    elif current_round <= 1 and not story_so_far:
+    # 2. Main Menu (Level 1 Hooks)
+    elif current_level <= 1 and not story_so_far:
         selected_genres = random.sample(GENRES, 3)
         prompt = (
             "Generate 3 completely distinct sci-fi seed stories (hooks). "
@@ -77,7 +81,7 @@ def generate_narrative(story_so_far: str, player_health: int, player_wpm: int, c
     # 3. Mid-Game Branching
     else:
         selected_archetypes = random.sample(ARCHETYPES, 3)
-        target_words = get_target_words(player_wpm)
+        target_words = get_target_words(wpm=player_wpm)
         prompt = (
             f"The story so far: {story_so_far}\n\n"
             "Continue the narrative from this exact moment. Generate 3 distinct branching choices. "
@@ -86,16 +90,40 @@ def generate_narrative(story_so_far: str, player_health: int, player_wpm: int, c
             f"The 'full_narrative' for each branch must be approximately {target_words} words."
         )
 
-    response = client.models.generate_content(
-        model=model_name,
-        contents=prompt,
-        config=types.GenerateContentConfig(
-            system_instruction=system_prompt,
-            response_mime_type="application/json",
-            response_schema=GameMasterResponse,
-            temperature=0.7,
-        ),
-    )
-    
-    # Parse the structured output
-    return GameMasterResponse.model_validate_json(response.text)
+    max_retries = 3
+    for attempt in range(max_retries):
+        response = client.models.generate_content(
+            model=model_name,
+            contents=prompt,
+            config=types.GenerateContentConfig(
+                system_instruction=system_prompt,
+                response_mime_type="application/json",
+                response_schema=GameMasterResponse,
+                temperature=0.7,
+            ),
+        )
+        
+        # Parse the structured output
+        parsed_response = GameMasterResponse.model_validate_json(response.text)
+        
+        # Validation: check if all strings are ASCII
+        is_ascii = True
+        for branch in parsed_response.branches:
+            if not branch.action_summary.isascii() or not branch.full_narrative.isascii():
+                is_ascii = False
+                break
+                
+        if is_ascii:
+            return parsed_response
+            
+        print(f"Warning: Non-ASCII characters detected in attempt {attempt + 1}. Retrying...")
+
+    # If we exhaust retries, sanitize it manually to guarantee ASCII compliance
+    for branch in parsed_response.branches:
+        branch.action_summary = branch.action_summary.replace("‘", "'").replace("’", "'").replace("“", '"').replace("”", '"').replace("—", "-")
+        branch.action_summary = "".join(c for c in branch.action_summary if c.isascii())
+        
+        branch.full_narrative = branch.full_narrative.replace("‘", "'").replace("’", "'").replace("“", '"').replace("”", '"').replace("—", "-")
+        branch.full_narrative = "".join(c for c in branch.full_narrative if c.isascii())
+        
+    return parsed_response
