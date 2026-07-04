@@ -27,3 +27,5 @@ Welcome to the Type Your Adventure codebase. This project follows strict Agentic
 
 ## 6. Code Style
 *   **Python Named Parameters:** When calling custom Python functions (not built-ins), always use named parameters (keyword arguments) rather than positional arguments. This improves readability and maintainability.
+*   **JavaScript / TypeScript Strings:** Always prefer using single quotes (`'`) over double quotes (`"`) for strings when feasible. This aligns with modern JS/TS ecosystem conventions (Prettier, StandardJS).
+*   **Python Strings:** Always prefer using double quotes (`"`) over single quotes (`'`) for strings when feasible, aligning with PEP-8 formatting standards like Black.

@@ -8,22 +8,41 @@
   - `[x]` React frontend `<Game />` wrapper integration
   - `[x]` WPM Calculation & 70% Background Prefetch trigger
   - `[x]` End Screen Cinematic and .txt download
+  - `[x]` Remove LLM death story generation to trigger instant defeat screen
 - `[x]` Implement Static Line-Based Text Box wrapping
 - `[x]` Implement Shooter enemy archetype mechanics and visuals
 - `[x]` Fix requestAnimationFrame deltaTime tab-switching bug
 - `[x]` Phase 3.6: Cinematic Boss Level Environments (Accretion Vortex & Ripples)
 - `[x]` Phase 3.7: Native Bot Mode for Automated Playtesting
 - `[x]` Phase 5: UI Polish (Text Box Progress Fill)
-- `[ ]` Phase 5: Final UI/UX Polish (Strategic RPG aesthetics)
+- `[x]` Phase 5: Final UI/UX Polish (Strategic RPG aesthetics)
+  - `[x]` React DOM Victory Screen Overlay (WPM, Word Count, Scrollable Story)
+  - `[x]` Smooth Abyssal Void Background Cross-fade Transition
+  - `[x]` Force Victory/Defeat screen stories to scroll to top by default
+  - `[x]` Implement "Mission Failed" screen and "Replay Level" logic
+  - `[x]` Defeat screen terminal error logs and CSS glitching `[ TRANSMISSION LOST ]` animation
 - `[x]` Phase 3.8: The Final Encounter (Boss Level)
+  - `[x]` Fix Boss level spawner logic for Slow/Medium players
   - `[x]` Decouple Enemy spawning and implement Boss health/damage routing
   - `[x]` Overcharge Deflector Shield mechanics and UI
   - `[x]` Cybernetic Dreadnought (Visuals, Core Laser, Turret Bullet Hell)
+  - `[x]` Cybernetic Dreadnought: QTE Laser Beam Attack
+  - `[x]` Cybernetic Dreadnought: Menacing sweeping strafe pattern
+  - `[x]` Overhaul Cybernetic Dreadnought aesthetics (Stealth-bomber styling)
   - `[x]` Abyssal Bio-Entity (Visuals, Spinning Danmaku)
   - `[x]` Abyssal Bio-Entity: 3 distinct strafing patterns
-  - `[x]` Abyssal Bio-Entity: Spaghettification death sequence
+  - `[x]` Abyssal Bio-Entity: Spaghettification death sequence with physical axis alignment
   - `[x]` Abyssal Bio-Entity: QTE Laser Beam Attack
   - `[x]` Cinematic Death Blossom Finisher
+- `[x]` Phase 5.5: Centralized Configuration (`gameConfig.ts`)
+- `[x]` Phase 6: TDD Bug Fixes and Stability Polish
+  - `[x]` Fix ReferenceError during Boss bullet collision with deflector shield
+  - `[x]` Fix Fast Typing desynchronization (force-spawn from pendingSpawnQueue)
+  - `[x]` Fix infinite deflector shield duration logic (corrupted active time decrement)
+  - `[x]` Fix player ship rotation interpolation (accidentally deleted targetAngle logic)
+  - `[x]` Investigate UI bug where untyped text `#555555` blends into dark background
+  - `[x]` Implement strict DDA spawn hard cap and lower low-health density to 4
+  - `[x]` Remove Deflector Shield cooldown to allow instant recharge on Boss level
 - `[ ]` Stretch Goal: End Screen Text-to-Speech (TTS)
 - `[ ]` Stretch Goal: Sound Effects / BGM
 - `[ ]` Stretch Goal: Log important game play metrics
