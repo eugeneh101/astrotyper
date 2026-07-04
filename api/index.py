@@ -19,7 +19,7 @@ RATE_LIMIT_WINDOW_SECONDS = 60
 class GameState(BaseModel):
     story_so_far: str = Field(..., max_length=15000, description="The accumulated story text")
     player_health: int = Field(..., ge=0, le=100)
-    player_wpm: int = Field(..., ge=0, le=500)
+    player_wpm: int = Field(..., ge=0, le=2000)
     current_level: int = Field(..., ge=1, le=50)
 
 from api.agent import generate_narrative as run_agent

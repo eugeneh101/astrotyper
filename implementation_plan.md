@@ -89,10 +89,10 @@ We will build this entirely within a single repository optimized for Vercel's fr
 *   **Encounter 2: The Abyssal Bio-Entity (Organic Mechanics)**
     *   **Animation:** Writhing, pulsating tentacles, and glowing toxic veins. The entire entity rotates/spins continuously while firing. Added 3 distinct randomized strafing patterns.
     *   **Attack 1 (Spinning Toxic Danmaku):** The Boss spins and continuously emits outward spirals of toxic projectiles. Nerfed attack duration.
-    *   **Attack 2 (QTE Beam Attack - PENDING):** The Boss randomly switches from strafing to charging a massive Bio-Beam. The player has a short Quick Time Event window to interrupt the attack by typing rapidly.
+    *   **Attack 2 (QTE Beam Attack):** The Boss randomly switches from strafing to charging a massive Bio-Beam. The player has a short Quick Time Event window to interrupt the attack by typing rapidly.
     *   **Death Animation:** Added Black Hole Spaghettification sequence upon defeat.
 *   **Defense Mechanic: The Overcharge Deflector Shield**
-    *   To prevent the deflector shield from making the player permanently invincible, it acts on an Overcharge system. Rapid, accurate typing builds up the "Deflector Charge" meter. Once full, the Energy Deflector Shield expands outward for 5 seconds, vaporizing all incoming bullet hell projectiles (from Turrets or Danmaku) and allowing the player's normal health shield to regenerate. After 5 seconds, it dissipates and must be charged again. 
+    *   To prevent the deflector shield from making the player permanently invincible, it acts on an Overcharge system. Rapid, accurate typing builds up the "Deflector Charge" meter. Once full, the Energy Deflector Shield expands outward for 5 seconds, vaporizing all incoming bullet hell projectiles (from Turrets or Danmaku) and allowing the player's normal health shield to regenerate. After 5 seconds, it dissipates and enters a strict 10-second cooldown period before it can be charged again. 
 *   **Cinematic Finisher: The Death Blossom**
     *   When the Boss's health reaches 0, the final correct keystroke triggers the ultimate cinematic finisher. The player's ship begins to spin rapidly (The Death Blossom), firing a massive, screen-filling radial pattern of glowing plasma bolts that converge on the Boss, causing a chain reaction of catastrophic explosions that obliterate the boss sprite.
 

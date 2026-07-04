@@ -67,8 +67,8 @@ export class GameEngine {
         this.playerSprite = new Image();
         this.playerSprite.src = '/player_ship.png';
 
-        // Initialize starfield
-        for(let i=0; i<300; i++) {
+        // Initialize starfield with a large number of stars distributed across the virtual 3000x2000 space
+        for(let i=0; i<800; i++) {
             this.stars.push({
                 x: Math.random() * 3000,
                 y: Math.random() * 2000,
@@ -193,45 +193,72 @@ export class GameEngine {
                                 this.boss.takeDamage(damagePerWord);
                             }
                             
-                            // Build Deflector Charge
-                            if (this.deflectorCooldown <= 0 && this.deflectorActiveTime <= 0) {
-                                this.deflectorCharge += 0.05; // 20 words to charge
-                                if (this.deflectorCharge >= 1.0) {
-                                    this.deflectorCharge = 1.0;
-                                    this.deflectorActiveTime = 5; // Active for 5 seconds
-                                }
-                            }
-                            
                             // If boss died, trigger Black Hole Spaghettification
                             if (this.boss.isDead && !this.deathBlossomActive) {
                                 this.deathBlossomActive = true;
                                 
-                                // The boss shrinks and spins violently into the abyss
+                                const canvasW = this.canvas.width / (window.devicePixelRatio || 1);
+                                const canvasH = this.canvas.height / (window.devicePixelRatio || 1);
+                                
+                                // Spaghettification: the boss stretches TOWARD the singularity
+                                // Track animation progress for accelerating pull
+                                let progress = 0;
+                                const singularityX = canvasW / 2;
+                                const singularityY = canvasH / 2;
+                                
                                 let shrinkInterval = setInterval(() => {
                                     if (this.boss) {
-                                        this.boss.x += (canvasW / 2 - this.boss.x) * 0.15; // Pull to center
-                                        this.boss.y += (canvasH / 2 - this.boss.y) * 0.15; // Pull to center
+                                        progress += 0.025;
+                                        const accel = 1 + progress * progress * 4; // Accelerating pull
                                         
-                                        // Spaghettification! Stretch vertically, crush horizontally!
-                                        this.boss.scaleX *= 0.85;
-                                        this.boss.scaleY *= 1.1; 
+                                        // Pull toward singularity with increasing speed
+                                        this.boss.x += (singularityX - this.boss.x) * 0.08 * accel;
+                                        this.boss.y += (singularityY - this.boss.y) * 0.08 * accel;
                                         
+                                        // Calculate angle from boss to singularity
+                                        const dx = singularityX - this.boss.x;
+                                        const dy = singularityY - this.boss.y;
+                                        const angle = Math.atan2(dy, dx);
+                                        
+                                        // Stretch ALONG the axis toward the singularity, compress perpendicular
+                                        // As progress increases: stretch grows dramatically, compression intensifies
+                                        const stretch = 1 + progress * 4;    // Elongate toward hole
+                                        const compress = Math.max(0.05, 1 - progress * 1.5); // Crush sideways
+                                        
+                                        // Apply as directional scale via rotation trick:
+                                        // scaleX = stretch along the toward-hole axis
+                                        // scaleY = compress perpendicular
+                                        // The boss draw() already applies scaleX/scaleY, so we encode the
+                                        // directional distortion. We rotate the boss to face the hole,
+                                        // then the scale axes align correctly.
                                         if (this.boss instanceof BioBoss || this.boss instanceof DreadnoughtBoss) {
-                                            (this.boss as any).spinAngle += 0.8; // Spin very fast
+                                            (this.boss as any).spinAngle = angle - Math.PI / 2; // Face the hole
                                         }
+                                        this.boss.scaleX = compress;
+                                        this.boss.scaleY = stretch;
                                         
-                                        // We will just draw a black hole over it in render, and let it disappear.
+                                        // Emit debris particles being ripped off
+                                        if (Math.random() < 0.4 + progress) {
+                                            const debrisAngle = angle + Math.PI + (Math.random() - 0.5) * 1.5;
+                                            this.explosions.push(new Explosion(
+                                                this.boss.x + Math.cos(debrisAngle) * 30 * compress,
+                                                this.boss.y + Math.sin(debrisAngle) * 30 * compress,
+                                                progress > 0.5 ? '#ff4400' : '#ffaa00', 
+                                                5 + Math.random() * 10
+                                            ));
+                                        }
                                     }
                                 }, 50);
 
                                 setTimeout(() => {
                                     clearInterval(shrinkInterval);
                                     if (this.boss) {
-                                        this.explosions.push(new Explosion(this.boss.x, this.boss.y, '#000000', 100)); // Dark explosion
-                                        this.boss = null; // Visually erase the boss after it collapses
+                                        // Final implosion at the singularity
+                                        this.explosions.push(new Explosion(singularityX, singularityY, '#8800ff', 120));
+                                        this.explosions.push(new Explosion(singularityX, singularityY, '#000000', 80));
+                                        this.boss = null;
                                         this.deathBlossomActive = false;
                                         
-                                        // Wait 1 second for explosion to play before showing next screen
                                         setTimeout(() => {
                                             if (this.pendingBranches) {
                                                 this.state = 'BRANCHING';
@@ -242,6 +269,15 @@ export class GameEngine {
                             }
                         } else {
                             this.explosions.push(new Explosion(activeEnemy.x, activeEnemy.y, '#00ffcc', 30)); // Cyan explosion!
+                        }
+                        
+                        // Build Deflector Charge only during Boss levels
+                        if (this.isBossLevel && this.deflectorCooldown <= 0 && this.deflectorActiveTime <= 0) {
+                            this.deflectorCharge += 0.05; // 20 words to charge
+                            if (this.deflectorCharge >= 0.99) { // Fix floating point precision issues
+                                this.deflectorCharge = 1.0;
+                                this.deflectorActiveTime = 5; // Active for 5 seconds
+                            }
                         }
                         
                         this.activeEnemyIndex++;
@@ -291,6 +327,35 @@ export class GameEngine {
     }
 
     private spawnWave(text: string) {
+        // Sanitize text to prevent double spaces from breaking the parsing and typing logic
+        text = text.trim().replace(/\s+/g, ' ');
+        
+        if (this.currentRound >= 4) {
+            this.isBossLevel = true;
+            this.currentStoryText = text;
+            this.globalTypedText = "";
+            this.enemies = [];
+            this.lasers = [];
+            this.explosions = [];
+            
+            const canvasW = this.canvas.width / (window.devicePixelRatio || 1);
+            
+            // Dynamic Encounter Routing - spawn off-screen for suspenseful entrance
+            if (this.lockedWpm >= 70) {
+                this.boss = new BioBoss(canvasW / 2, -200, text.length * 10);
+            } else {
+                this.boss = new DreadnoughtBoss(canvasW / 2, -200, text.length * 10);
+            }
+            
+            // Split the boss text into individual words
+            const words = text.split(' ');
+            for (let i = 0; i < words.length; i++) {
+                this.enemies.push(new Enemy(canvasW / 2, 100, words[i], 0, 0, 'boss_target'));
+            }
+            this.activeEnemyIndex = 0;
+            return;
+        }
+
         this.currentStoryText = text;
         if (this.currentRound === 1) this.fullStoryHistory += text;
         this.globalTypedText = "";
@@ -344,6 +409,21 @@ export class GameEngine {
         this.animationFrameId = requestAnimationFrame(this.loop);
     }
 
+    private takeDamage(amount: number) {
+        if (this.state !== 'PLAYING') return;
+        this.health -= amount;
+        if (this.health <= 0) {
+            this.health = 0;
+            this.state = 'GAMEOVER';
+            
+            // Ask Gemini for a unique death story asynchronously
+            if (this.onPrefetchRequested) {
+                // We pass the final state to the backend to generate a death message
+                this.onPrefetchRequested(Math.round(this.displayWpm), 0, this.currentRound);
+            }
+        }
+    }
+
     private update(dt: number) {
         const canvasH = this.canvas.height / (window.devicePixelRatio || 1);
         const playerX = this.canvas.width / (window.devicePixelRatio || 1) / 2;
@@ -378,8 +458,8 @@ export class GameEngine {
             }
             
             // Calculate real-time WPM (smooth speedometer)
-            if (this.levelStartTime > 0) {
-                const timeElapsedMins = (performance.now() - this.levelStartTime) / 60000;
+            if (this.roundStartTime > 0) {
+                const timeElapsedMins = (performance.now() - this.roundStartTime) / 60000;
                 // Wait 3 seconds to avoid massive start-up spikes on the first few keystrokes
                 if (timeElapsedMins > 0.05) { 
                     const wordsTyped = this.globalTypedText.length / 5;
@@ -431,27 +511,26 @@ export class GameEngine {
             // Do not update or process enemies that are already dead
             if (e.isDead) continue;
 
-            e.update(dt, playerX, playerY);
-
-            if (e.isDead) {
-                if (e.hitShield) {
-                    this.explosions.push(new Explosion(e.x, e.y, '#ff0055', 40)); // Big red explosion
-                    this.health = Math.max(0, this.health - 15);
-                    this.timeSinceLastDamage = 0; // Reset regen timer!
-                    this.combo = 0;
-                    // If the active enemy hit the shield, advance the pointer so player isn't stuck
-                    if (i === this.activeEnemyIndex) {
-                        this.activeEnemyIndex++;
-                        // Fast-forward global text so the player doesn't have to type the dead enemy's word
-                        if (this.activeEnemyIndex < this.enemies.length) {
-                            this.globalTypedText = this.currentStoryText.substring(0, this.enemies[this.activeEnemyIndex].startIndex);
-                        } else {
-                            this.globalTypedText = this.currentStoryText;
-                        }
-                    }
+            // Leech Mechanic: If already attached to shield from a PREVIOUS frame, drain health continuously
+            // This is checked BEFORE e.update() so the collision frame itself deals no burst damage.
+            if (e.hitShield && !e.isDead) {
+                this.health = Math.max(0, this.health - 10 * dt);
+                this.timeSinceLastDamage = 0; // Prevent shield regeneration while being leeched
+                this.combo = 0; // Break combo
+                
+                // Spawn tiny damage sparks randomly
+                if (Math.random() < 0.1) {
+                    this.explosions.push(new Explosion(e.x + (Math.random()-0.5)*10, e.y + (Math.random()-0.5)*10, '#ff0055', 10));
                 }
-                // We don't remove them from the array so indexing stays intact, just skip drawing later
             }
+
+            e.update(dt, playerX, playerY);
+        }
+
+        // Check for GAMEOVER after all enemy processing
+        if (this.health <= 0 && this.state !== 'GAMEOVER') {
+            this.state = 'GAMEOVER';
+            this.explosions.push(new PlayerDeathExplosion(playerX, playerY));
         }
 
         // Update lasers
@@ -476,6 +555,11 @@ export class GameEngine {
         // Deflector timers
         if (this.deflectorActiveTime > 0) {
             this.deflectorActiveTime -= dt;
+            if (this.deflectorActiveTime <= 0) {
+                this.deflectorActiveTime = 0;
+                this.deflectorCooldown = 10; // 10 second cooldown before it can start charging again
+                this.deflectorCharge = 0; // Reset charge to 0
+            }
         } else if (this.deflectorCooldown > 0) {
             this.deflectorCooldown -= dt;
         }
@@ -502,21 +586,21 @@ export class GameEngine {
                 b.update(dt);
                 
                 if (this.state === 'PLAYING') {
-                    // Collision with player
                     const dist = Math.hypot(playerX - b.x, playerY - b.y);
-                    let hitRadius = 15;
+                    // Deflector shield is larger (110px) than the normal health shield (80px)
+                    const activeRadius = this.deflectorActiveTime > 0 ? 110 : 80;
                     
-                    if (this.deflectorActiveTime > 0) {
-                        hitRadius = 80;
-                        if (dist < hitRadius) {
+                    if (dist < activeRadius) {
+                        if (this.deflectorActiveTime > 0) {
+                            // Deflector active: vaporize with no damage
                             this.explosions.push(new Explosion(b.x, b.y, '#00ffcc', 15));
-                            this.bossBullets.splice(i, 1);
+                        } else {
+                            // Normal shield: absorb hit but take damage
+                            this.takeDamage(5);
+                            this.explosions.push(new Explosion(b.x, b.y, '#ff0055', 20));
+                            this.timeSinceLastDamage = 0;
+                            this.combo = 0;
                         }
-                    } else if (dist < hitRadius) {
-                        this.takeDamage(5); // Increased from 2 to 5 to make it dangerous
-                        this.explosions.push(new Explosion(playerX, playerY, '#ff0055', 20));
-                        this.timeSinceLastDamage = 0;
-                        this.combo = 0;
                         this.bossBullets.splice(i, 1);
                     }
                 }
@@ -695,12 +779,12 @@ export class GameEngine {
             const currentSpeed = isWarping ? star.speed * 20 : star.speed;
             star.y += currentSpeed;
             
-            if (star.y > h) {
-                star.y = 0;
-                star.x = Math.random() * w;
+            // Wrap stars around the massive 3000x2000 virtual space so they are always uniform for the boss fight
+            if (star.y > 2000) {
+                star.y = 0; 
+                star.x = Math.random() * 3000;
             }
-            if (star.x > w) star.x = 0;
-
+            
             this.ctx.globalAlpha = star.size / 4;
             const stretch = isWarping ? 20 : 2;
             this.ctx.fillRect(star.x, star.y, star.size, star.size * stretch);
@@ -790,6 +874,67 @@ export class GameEngine {
             this.ctx.lineTo(-15, 20);
             this.ctx.closePath();
             this.ctx.fillStyle = '#ffffff';
+            this.ctx.fill();
+        }
+
+        // Health-Based Shield Ring (always visible, scales with health)
+        if (this.health > 0 && this.state !== 'GAMEOVER') {
+            this.ctx.globalCompositeOperation = 'source-over';
+            const healthPercent = this.health / GAME_CONFIG.player.maxHealth;
+            
+            // Color shifts: Cyan (100%) -> Yellow (50%) -> Orange (25%)
+            let r: number, g: number, b: number;
+            if (healthPercent > 0.5) {
+                // Cyan to Yellow
+                const t = (healthPercent - 0.5) / 0.5;
+                r = Math.round(255 * (1 - t));
+                g = 255;
+                b = Math.round(204 * t);
+            } else {
+                // Yellow to Orange
+                const t = healthPercent / 0.5;
+                r = 255;
+                g = Math.round(255 * t);
+                b = 0;
+            }
+            
+            // Line width scales from 5px (full) to 1px (critical)
+            const lineW = 1 + 4 * healthPercent;
+            const alpha = 0.3 + 0.5 * healthPercent;
+            
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, 80, 0, Math.PI * 2);
+            this.ctx.strokeStyle = `rgba(${r}, ${g}, ${b}, ${alpha})`;
+            this.ctx.lineWidth = lineW;
+            this.ctx.shadowBlur = 10 * healthPercent;
+            this.ctx.shadowColor = `rgb(${r}, ${g}, ${b})`;
+            this.ctx.stroke();
+        }
+
+        // Deflector Shield Aura (Overcharge ability - temporary, much larger than health shield)
+        if (this.deflectorActiveTime > 0) {
+            this.ctx.globalCompositeOperation = 'screen';
+            
+            // Pulsing outer ring at 110px
+            const pulse = 20 + Math.sin(Date.now() / 80) * 15;
+            this.ctx.shadowBlur = pulse;
+            this.ctx.shadowColor = '#00ffcc';
+            
+            // Outer ring - thick and bright
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, 110, 0, Math.PI * 2);
+            this.ctx.strokeStyle = `rgba(0, 255, 204, ${0.6 + Math.sin(Date.now() / 120) * 0.3})`;
+            this.ctx.lineWidth = 4;
+            this.ctx.stroke();
+            
+            // Inner filled glow
+            const deflectorGrad = this.ctx.createRadialGradient(0, 0, 60, 0, 0, 110);
+            deflectorGrad.addColorStop(0, 'rgba(0, 255, 204, 0.0)');
+            deflectorGrad.addColorStop(0.5, 'rgba(0, 255, 204, 0.08)');
+            deflectorGrad.addColorStop(1, 'rgba(0, 255, 204, 0.2)');
+            this.ctx.beginPath();
+            this.ctx.arc(0, 0, 110, 0, Math.PI * 2);
+            this.ctx.fillStyle = deflectorGrad;
             this.ctx.fill();
         }
         

@@ -50,10 +50,13 @@ export abstract class Boss {
     time: number = 0;
     scaleX: number = 1.0;
     scaleY: number = 1.0;
+    entering: boolean = true;
+    targetY: number;
 
     constructor(x: number, y: number, maxHealth: number) {
         this.x = x;
         this.y = y;
+        this.targetY = 150; // Final resting Y position
         this.maxHealth = maxHealth;
         this.health = maxHealth;
     }
@@ -85,6 +88,16 @@ export class DreadnoughtBoss extends Boss {
 
     update(dt: number, bullets: Bullet[], enemies: Enemy[]) {
         this.time += dt;
+        
+        // Boss entrance animation - slowly descend into view
+        if (this.entering) {
+            this.y += (this.targetY - this.y) * 1.5 * dt;
+            if (Math.abs(this.y - this.targetY) < 2) {
+                this.y = this.targetY;
+                this.entering = false;
+            }
+            return; // Skip all combat logic during entrance
+        }
         
         // Hovering motion
         this.x += Math.sin(this.time) * 20 * dt;
@@ -216,6 +229,17 @@ export class BioBoss extends Boss {
 
     update(dt: number, bullets: Bullet[], enemies: Enemy[]) {
         this.time += dt;
+        
+        // Boss entrance animation - slowly descend into view
+        if (this.entering) {
+            this.y += (this.targetY - this.y) * 1.5 * dt;
+            if (Math.abs(this.y - this.targetY) < 2) {
+                this.y = this.targetY;
+                this.entering = false;
+            }
+            return; // Skip all combat logic during entrance
+        }
+        
         this.modeTimer += dt;
         
         // State Machine

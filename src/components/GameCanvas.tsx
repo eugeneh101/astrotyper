@@ -24,7 +24,7 @@ export default function GameCanvas() {
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     story_so_far: engineRef.current!.getStorySoFar(),
-                    player_health: health,
+                    player_health: Math.round(health),
                     player_wpm: wpm,
                     current_level: level
                 })
