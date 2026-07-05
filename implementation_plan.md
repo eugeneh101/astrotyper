@@ -36,3 +36,15 @@ A series of strict TDD (Red-Green-Refactor) sessions were executed to resolve se
 *   **Feature Update:** The Dynamic Difficulty Adjustment (DDA) algorithm for Enemy Density was updated. It now enforces a *strict* hard cap, pausing all enemy spawns entirely if the screen is too crowded for the player's current health. Additionally, the density floor at critical health was lowered from 5 to 4 enemies to grant more breathing room.
 *   **Feature Update:** The Deflector Shield 5-second cooldown was completely removed, allowing players to instantly begin recharging it once it expires during Boss encounters.
 *   **Verification:** TDD unit tests modified and added to strictly verify the `<= 4` spawn hard cap and the `0` cooldown on boss levels.
+
+### 6. Balancing and UI Polish
+*   **Feature Update:** Reduced Dreadnought turret fire rate to `0.15` and added 2 new erratic strafing patterns (total 5).
+*   **Feature Update:** Added real-time `displayWpm` and `wordsTyped` metrics to the `BRANCHING` state (end of level screen).
+*   **UI Tweaks:** Increased opacity of the textbot progress fill from `0.15` to `0.35` and brightened untyped text color from `#555555` to `#aaaaaa` for better readability.
+*   **Security:** Performed STRIDE threat model assessment, added Pydantic input validation, sanitization, and IP rate limiting to `api/index.py`.
+
+## Phase 7: LLM Evaluation & Terminology Overhaul [COMPLETED]
+*   **Evaluation Engine:** Created a pure Python LLM-as-a-judge evaluation suite (`tests/eval/run_evals.py`) to systematically grade the Game Master agent's JSON outputs against negative containment constraints.
+*   **True Negative Testing:** Designed a robust dataset (`basic-dataset.json`) featuring "True Positive" cases (grading the live agent) and "True Negative" cases (injecting intentional bad JSONs to test the Judge's ability to catch rule violations).
+*   **Dynamic Rubric:** Refactored `api/agent.py` to extract `SYSTEM_PROMPT` into a global constant, allowing the Judge to dynamically read and grade based on the exact same constraints given to the Agent.
+*   **Terminology:** Executed a global refactor across the entire codebase and documentation, replacing all instances of "round" with "level" to unify the game's internal and external language.

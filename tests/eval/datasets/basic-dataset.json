@@ -1,0 +1,63 @@
+{
+  "eval_cases": [
+    {
+      "id": "case_1_high_wpm",
+      "story_so_far": "The airlock hisses open, revealing a squad of heavily armed mercenaries.",
+      "player_wpm": 150,
+      "current_level": 2,
+      "description": "True Positive (Good Response expected from Agent): High WPM / Low Health."
+    },
+    {
+      "id": "case_2_level_transition",
+      "story_so_far": "You defeat the final kamikaze, clearing the sector. A jump gate looms ahead.",
+      "player_wpm": 60,
+      "current_level": 3,
+      "description": "True Positive (Good Response expected from Agent): Transitioning Levels."
+    },
+    {
+      "id": "case_3_bad_4th_wall",
+      "story_so_far": "You sit at the main console.",
+      "player_wpm": 80,
+      "current_level": 2,
+      "description": "True Negative (Testing Judge): Intentional 4th wall break + player typing reference.",
+      "intentional_bad_response": {
+        "branches": [
+          {
+            "action_summary": "Type faster to win",
+            "full_narrative": "You must type the words on the screen as fast as your fingers can hit the keyboard to survive this round!"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case_4_bad_mechanics",
+      "story_so_far": "The engineer yells about shields.",
+      "player_wpm": 50,
+      "current_level": 2,
+      "description": "True Negative (Testing Judge): Intentional game mechanics reference.",
+      "intentional_bad_response": {
+        "branches": [
+          {
+            "action_summary": "Heal your HP",
+            "full_narrative": "You take a health pack. Your HP is restored to 100, and your WPM multiplier increases for the next level."
+          }
+        ]
+      }
+    },
+    {
+      "id": "case_5_bad_summary_length",
+      "story_so_far": "A massive swarm of drones descends.",
+      "player_wpm": 75,
+      "current_level": 2,
+      "description": "True Negative (Testing Judge): Intentional action summary exceeding 10 words.",
+      "intentional_bad_response": {
+        "branches": [
+          {
+            "action_summary": "You decide to completely ignore the drones and fly your ship away quickly.",
+            "full_narrative": "The drones swarm, but you manage to evade them using your thrusters."
+          }
+        ]
+      }
+    }
+  ]
+}

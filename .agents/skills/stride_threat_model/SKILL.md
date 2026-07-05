@@ -1,8 +1,6 @@
 ---
 name: stride-threat-model
-description: Performs a systematic STRIDE threat modeling assessment on the
-current project's codebase and architecture. Use this when starting a new
-implementation phase or reviewing existing components.
+description: Performs a systematic STRIDE threat modeling assessment on the current project's codebase and architecture. Use this when starting a new implementation phase or reviewing existing components.
 ---
 
 # STRIDE Threat Modeling Skill

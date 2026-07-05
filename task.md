@@ -43,6 +43,16 @@
   - `[x]` Investigate UI bug where untyped text `#555555` blends into dark background
   - `[x]` Implement strict DDA spawn hard cap and lower low-health density to 4
   - `[x]` Remove Deflector Shield cooldown to allow instant recharge on Boss level
+  - `[x]` Perform STRIDE threat model assessment and add backend rate limiting/sanitization
+  - `[x]` Balance Bosses (5 Dreadnought patterns, adjusted fire rates, 4s BioBoss QTE)
+  - `[x]` Add real-time WPM metrics to end-of-level branching screen
+  - `[x]` UI brightness tweaks for textbot progress and untyped characters
+- `[x]` Phase 7: LLM Evaluation & Terminology Overhaul
+  - `[x]` Implement `run_evals.py` LLM-as-a-judge test suite
+  - `[x]` Create `basic-dataset.json` with True Positive and True Negative edge cases
+  - `[x]` Inject dynamic agent `SYSTEM_PROMPT` into judge logic for strict constraint verification
+  - `[x]` Global terminology refactor: Replace "round" with "level" project-wide
+  - `[x]` Fix syntax bug (`Math.level`) caused by terminology refactor
 - `[ ]` Stretch Goal: End Screen Text-to-Speech (TTS)
 - `[ ]` Stretch Goal: Sound Effects / BGM
 - `[ ]` Stretch Goal: Log important game play metrics

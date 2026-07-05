@@ -333,7 +333,7 @@ describe('GameEngine - Core Typing Logic', () => {
 
   it('Does not crash with ReferenceError when processing Boss bullets', () => {
     engine.handleInput(' '); // Start game
-    engine.currentRound = 4; // Boss round
+    engine.currentLevel = 4; // Boss level
     (engine as any).isBossLevel = true;
     (engine as any).state = 'PLAYING';
 
@@ -362,7 +362,7 @@ describe('GameEngine - Core Typing Logic', () => {
 
   it('Deflector shield active time decreases and enters cooldown', () => {
     engine.handleInput(' '); // Start game
-    engine.currentRound = 4; // Boss round
+    engine.currentLevel = 4; // Boss level
     (engine as any).isBossLevel = true;
     (engine as any).state = 'PLAYING';
 

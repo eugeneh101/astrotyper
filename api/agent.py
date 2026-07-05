@@ -59,20 +59,19 @@ from dotenv import load_dotenv
 
 load_dotenv(".env.local")
 
+SYSTEM_PROMPT = (
+    "You are a gritty, epic sci-fi narrator. You must strictly output JSON matching the provided schema. "
+    "NEVER break the 4th wall. NEVER reference the player typing, WPM, levels, or game mechanics. "
+    "CRITICAL: You MUST use ONLY standard ASCII characters. Do NOT use smart quotes (‘, ’, “, ”), em-dashes (—), or any non-ASCII typography. Use standard straight single quotes (') and double quotes (\"). "
+    "Keep each 'action_summary' very concise (10 words maximum)."
+)
+
 
 def generate_narrative(
     story_so_far: str, player_health: int, player_wpm: int, current_level: int
 ) -> GameMasterResponse:
-    # Initialize the Gemini Client
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
     model_name = os.environ["GEMINI_MODEL"]
-
-    system_prompt = (
-        "You are a gritty, epic sci-fi narrator. You must strictly output JSON matching the provided schema. "
-        "NEVER break the 4th wall. NEVER reference the player typing, WPM, rounds, or game mechanics. "
-        "CRITICAL: You MUST use ONLY standard ASCII characters. Do NOT use smart quotes (‘, ’, “, ”), em-dashes (—), or any non-ASCII typography. Use standard straight single quotes (') and double quotes (\"). "
-        "Keep each 'action_summary' very concise (10 words maximum)."
-    )
 
     prompt = ""
 
@@ -103,7 +102,7 @@ def generate_narrative(
             model=model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
-                system_instruction=system_prompt,
+                system_instruction=SYSTEM_PROMPT,
                 response_mime_type="application/json",
                 response_schema=GameMasterResponse,
                 temperature=0.7,

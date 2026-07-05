@@ -145,10 +145,18 @@ export class DreadnoughtBoss extends Boss {
         // Pattern 1: Tighter, faster sweep
         targetX = this.startX + Math.sin(this.strafeTime * 2.5) * 150;
         targetY = 150 + Math.sin(this.strafeTime * 1.5) * 40;
-      } else {
+      } else if (this.strafePattern === 2) {
         // Pattern 2: Very wide, aggressive sweep with vertical bobbing
         targetX = this.startX + Math.sin(this.strafeTime * 0.8) * 350;
         targetY = 150 + Math.sin(this.strafeTime * 3) * 60;
+      } else if (this.strafePattern === 3) {
+        // Pattern 3: Rapid Figure-8
+        targetX = this.startX + Math.sin(this.strafeTime * 2) * 250;
+        targetY = 150 + Math.sin(this.strafeTime * 4) * 80;
+      } else {
+        // Pattern 4: Erratic jerky movement
+        targetX = this.startX + Math.sin(this.strafeTime * 1.5) * 200 + Math.sin(this.strafeTime * 10) * 40;
+        targetY = 150 + Math.cos(this.strafeTime * 1.5) * 50 + Math.cos(this.strafeTime * 12) * 30;
       }
     }
 
@@ -167,7 +175,7 @@ export class DreadnoughtBoss extends Boss {
 
       // Turret Bullet Hell (sweeping arcs) - only when not charging/firing
       this.turretPhase += dt;
-      if (Math.random() < 0.2) {
+      if (Math.random() < 0.15) {
         const spread = (Math.sin(this.turretPhase * 2) * Math.PI) / 4;
         const speed = 250;
 
@@ -201,7 +209,7 @@ export class DreadnoughtBoss extends Boss {
         this.isChargingLaser = false;
         this.laserCooldownTimer = 0; // Reset cooldown
         this.strafeTime = 0;
-        this.strafePattern = Math.floor(Math.random() * 3);
+        this.strafePattern = Math.floor(Math.random() * 5);
       } else if (this.chargeTimer >= this.chargeMax) {
         // QTE Failed! Fire the laser
         this.isChargingLaser = false;
@@ -214,7 +222,7 @@ export class DreadnoughtBoss extends Boss {
         this._isFiringLaser = false;
         this.laserCooldownTimer = 0;
         this.strafeTime = 0;
-        this.strafePattern = Math.floor(Math.random() * 3);
+        this.strafePattern = Math.floor(Math.random() * 5);
       }
     }
   }
@@ -553,7 +561,7 @@ export class BioBoss extends Boss {
 
     // Draw multiple writhing tentacles first (underneath the body)
     ctx.strokeStyle = '#00ff44';
-    ctx.lineCap = 'round';
+    ctx.lineCap = 'level';
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2 + this.time * 0.5;
       ctx.beginPath();

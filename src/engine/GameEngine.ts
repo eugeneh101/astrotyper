@@ -17,23 +17,26 @@ export class GameEngine {
         'AstroType: Infinite Odyssey. Press SPACE to begin.';
     public typedText: string = '';
     public combo: number = 0;
+    public maxCombo: number = 0;
     public health: number = GAME_CONFIG.PLAYER_MAX_HEALTH;
 
     // Narrative & API Integration
-    public currentRound: number = 1;
+    public currentLevel: number = 1;
     public fullStoryHistory: string = '';
     public victoryFired: boolean = false;
     public defeatFired: boolean = false;
     public onVictory?: (stats: {
         wpm: number;
         wordsTyped: number;
+        maxCombo: number;
         story: string;
     }) => void;
     public onDefeat?: (stats: {
         wpm: number;
         wordsTyped: number;
+        maxCombo: number;
         story: string;
-        roundNum: number;
+        levelNum: number;
         lockedWpm: number;
         storySoFar: string;
         waveText: string;
@@ -42,11 +45,11 @@ export class GameEngine {
     public onPrefetchRequested?: (
         wpm: number,
         health: number,
-        round: number,
+        level: number,
     ) => void;
     private prefetchTriggered: boolean = false;
-    private roundStartTime: number = 0;
-    private roundEndTime: number = 0;
+    private levelStartTime: number = 0;
+    private levelEndTime: number = 0;
     private pendingBranches:
         { action_summary: string; full_narrative: string }[] | null = null;
     public lockedWpm: number = 0;
@@ -162,6 +165,8 @@ export class GameEngine {
     public handleInput(key: string) {
         if (this.state === 'MENU' && key === ' ') {
             this.state = 'PLAYING';
+            this.combo = 0;
+            this.maxCombo = 0;
             this.spawnWave('Sensors detect incoming hostile anomalies.');
             return;
         }
@@ -180,6 +185,8 @@ export class GameEngine {
                     // Enter hyperdrive!
                     this.state = 'WARPING';
                     this.warpTimer = 2.0;
+                    this.combo = 0;
+                    this.maxCombo = 0;
 
                     this.fullStoryHistory +=
                         '\n\n> ' +
@@ -210,6 +217,9 @@ export class GameEngine {
         if (key === targetChar) {
             this.globalTypedText += key;
             this.combo++;
+            if (this.combo > this.maxCombo) {
+                this.maxCombo = this.combo;
+            }
 
             // If the key is not a space, it must belong to the active enemy
             if (key !== ' ') {
@@ -367,6 +377,7 @@ export class GameEngine {
                                                 this.onVictory({
                                                     wpm: Math.round(this.displayWpm),
                                                     wordsTyped,
+                                                    maxCombo: this.maxCombo,
                                                     story: this.fullStoryHistory,
                                                 });
                                             }
@@ -406,16 +417,16 @@ export class GameEngine {
                             this.prefetchTriggered = true;
                             // Calculate WPM up to this point
                             const timeElapsedMins =
-                                (performance.now() - this.roundStartTime) / 60000;
+                                (performance.now() - this.levelStartTime) / 60000;
                             const wordsTyped = this.globalTypedText.length / 5;
                             const wpm =
                                 timeElapsedMins > 0
                                     ? Math.round(wordsTyped / timeElapsedMins)
                                     : 0;
-                            if (this.currentRound === 2) {
+                            if (this.currentLevel === 2) {
                                 this.lockedWpm = wpm;
                             }
-                            this.onPrefetchRequested(wpm, this.health, this.currentRound);
+                            this.onPrefetchRequested(wpm, this.health, this.currentLevel);
                         }
                     }
                 }
@@ -454,14 +465,14 @@ export class GameEngine {
     }
 
     public replayLevel(
-        roundNum: number,
+        levelNum: number,
         lockedWpm: number,
         storySoFar: string,
         waveText: string,
     ) {
-        this.currentRound = roundNum;
+        this.currentLevel = levelNum;
         this.lockedWpm = lockedWpm;
-        this.fullStoryHistory = roundNum === 1 ? '' : storySoFar;
+        this.fullStoryHistory = levelNum === 1 ? '' : storySoFar;
         this.health = GAME_CONFIG.PLAYER_MAX_HEALTH;
         this.state = 'PLAYING';
         this.defeatFired = false;
@@ -474,7 +485,7 @@ export class GameEngine {
         text = text.trim().replace(/\s+/g, ' ');
 
         this.currentStoryText = text;
-        if (this.currentRound === 1) this.fullStoryHistory += text;
+        if (this.currentLevel === 1) this.fullStoryHistory += text;
         this.globalTypedText = '';
         this.enemies = [];
         this.lasers = [];
@@ -483,8 +494,8 @@ export class GameEngine {
         this.activeEnemyIndex = 0;
         this.prefetchTriggered = false;
         this.pendingBranches = null;
-        this.roundStartTime = performance.now();
-        this.roundEndTime = 0;
+        this.levelStartTime = performance.now();
+        this.levelEndTime = 0;
         this.previousLineIdx = 0;
         this.textScrollOffset = 0;
         this.scramblerTimer = 0;
@@ -492,8 +503,8 @@ export class GameEngine {
         this.spawnTimer = 0;
 
         const isActuallyBossLevel =
-            this.currentRound >= 4 ||
-            (this.currentRound === 3 && this.lockedWpm < GAME_CONFIG.BOSS_WPM_THRESHOLD);
+            this.currentLevel >= 4 ||
+            (this.currentLevel === 3 && this.lockedWpm < GAME_CONFIG.BOSS_WPM_THRESHOLD);
 
         if (isActuallyBossLevel) {
             this.isBossLevel = true;
@@ -535,8 +546,8 @@ export class GameEngine {
             const speed = 30 + Math.random() * 20;
 
             let type: 'kamikaze' | 'shooter' | 'scrambler' = 'kamikaze';
-            if (this.currentRound >= 2 && Math.random() < 0.3) {
-                if (this.currentRound === 3 && this.lockedWpm >= GAME_CONFIG.BOSS_WPM_THRESHOLD && Math.random() < 0.5) {
+            if (this.currentLevel >= 2 && Math.random() < 0.3) {
+                if (this.currentLevel === 3 && this.lockedWpm >= GAME_CONFIG.BOSS_WPM_THRESHOLD && Math.random() < 0.5) {
                     type = 'scrambler';
                 } else {
                     type = 'shooter';
@@ -591,28 +602,28 @@ export class GameEngine {
 
         this.starfieldOffset = (this.starfieldOffset + 50 * dt) % canvasH;
 
-        // Determine target background colors based on currentRound
-        let isBossRound = false;
-        let isBonusRound = false;
+        // Determine target background colors based on currentLevel
+        let isBossLevel = false;
+        let isBonusLevel = false;
         if (this.lockedWpm < 70) {
-            if (this.currentRound >= 3) isBossRound = true;
+            if (this.currentLevel >= 3) isBossLevel = true;
         } else {
-            if (this.currentRound === 3) isBonusRound = true;
-            if (this.currentRound >= 4) isBossRound = true;
+            if (this.currentLevel === 3) isBonusLevel = true;
+            if (this.currentLevel >= 4) isBossLevel = true;
         }
 
         let targetTopHex = '#000000';
         let targetBottomHex = '#000000';
-        if (this.currentRound === 1) {
+        if (this.currentLevel === 1) {
             targetTopHex = '#050510';
             targetBottomHex = '#000000';
-        } else if (this.currentRound === 2) {
+        } else if (this.currentLevel === 2) {
             targetTopHex = '#002244';
             targetBottomHex = '#000022';
-        } else if (isBossRound) {
+        } else if (isBossLevel) {
             targetTopHex = '#000000';
             targetBottomHex = '#000000';
-        } else if (isBonusRound) {
+        } else if (isBonusLevel) {
             targetTopHex = '#003322';
             targetBottomHex = '#001111';
         }
@@ -637,7 +648,7 @@ export class GameEngine {
             (targetBottomRgb.b - this.currentBgBottom.b) * lerpSpeed * dt;
 
         this.bossBgOpacity +=
-            ((isBossRound ? 1.0 : 0.0) - this.bossBgOpacity) * lerpSpeed * dt;
+            ((isBossLevel ? 1.0 : 0.0) - this.bossBgOpacity) * lerpSpeed * dt;
 
         if (this.scramblerTimer > 0) {
             this.scramblerTimer -= dt;
@@ -694,7 +705,7 @@ export class GameEngine {
             this.shipVisualY -= 100 * this.currentWarpMultiplier * dt;
 
             if (this.warpTimer <= 0) {
-                this.currentRound++;
+                this.currentLevel++;
                 this.state = 'PLAYING';
                 this.shipVisualY = 300; // Snap to below screen to slide back up gracefully
                 if (this.nextWaveText) {
@@ -717,20 +728,20 @@ export class GameEngine {
             }
 
             // Calculate real-time WPM (smooth speedometer)
-            if (this.roundStartTime > 0) {
+            if (this.levelStartTime > 0) {
                 // If we finished typing, stop the clock so WPM doesn't plummet during death animations
                 if (this.globalTypedText.length >= this.currentStoryText.length) {
-                    if (this.roundEndTime === 0) {
-                        this.roundEndTime = performance.now();
+                    if (this.levelEndTime === 0) {
+                        this.levelEndTime = performance.now();
                         const timeElapsedMins =
-                            (this.roundEndTime - this.roundStartTime) / 60000;
+                            (this.levelEndTime - this.levelStartTime) / 60000;
                         const wordsTyped = this.globalTypedText.length / 5;
                         this.displayWpm =
                             timeElapsedMins > 0 ? wordsTyped / timeElapsedMins : 0;
                     }
                 } else {
                     const timeElapsedMins =
-                        (performance.now() - this.roundStartTime) / 60000;
+                        (performance.now() - this.levelStartTime) / 60000;
                     // Wait 3 seconds to avoid massive start-up spikes on the first few keystrokes
                     if (timeElapsedMins > 0.05) {
                         const wordsTyped = this.globalTypedText.length / 5;
@@ -768,13 +779,14 @@ export class GameEngine {
                     onDefeatCallback({
                         wpm: Math.round(this.displayWpm),
                         wordsTyped: Math.floor(accurateStory.length / 5),
+                        maxCombo: this.maxCombo,
                         story:
                             pastStory.trim() +
                             '\n' +
                             this.globalTypedText.trim() +
                             '\n\n' +
                             terminalErrors.trim(),
-                        roundNum: this.currentRound,
+                        levelNum: this.currentLevel,
                         lockedWpm: this.lockedWpm,
                         storySoFar: this.fullStoryHistory,
                         waveText: this.currentStoryText,
@@ -1071,13 +1083,13 @@ export class GameEngine {
 
     private drawStarfield(w: number, h: number) {
         // Calculate boolean conditions for drawing stars/abyss
-        let isBossRound = false;
-        let isBonusRound = false;
+        let isBossLevel = false;
+        let isBonusLevel = false;
         if (this.lockedWpm < 70) {
-            if (this.currentRound >= 3) isBossRound = true;
+            if (this.currentLevel >= 3) isBossLevel = true;
         } else {
-            if (this.currentRound === 3) isBonusRound = true;
-            if (this.currentRound >= 4) isBossRound = true;
+            if (this.currentLevel === 3) isBonusLevel = true;
+            if (this.currentLevel >= 4) isBossLevel = true;
         }
 
         // Convert smoothed RGB back to string for drawing
@@ -1172,16 +1184,16 @@ export class GameEngine {
         }
 
         if (this.bossBgOpacity < 0.99) {
-            this.ctx.fillStyle = isBossRound
+            this.ctx.fillStyle = isBossLevel
                 ? '#ffaa00'
-                : isBonusRound
+                : isBonusLevel
                     ? '#00ffff'
                     : '#ffffff';
 
             for (const star of this.stars) {
                 const currentSpeed = star.speed * this.currentWarpMultiplier;
-                // Only move downwards if we aren't fully in boss round (boss round orbits instead)
-                if (!isBossRound) {
+                // Only move downwards if we aren't fully in boss level (boss level orbits instead)
+                if (!isBossLevel) {
                     star.y += currentSpeed;
                 }
 
@@ -1365,9 +1377,15 @@ export class GameEngine {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             this.ctx.fillRect(0, 0, w, h);
 
+            // Draw End-of-Level Metrics
+            const wordsTyped = Math.round(this.globalTypedText.length / 5);
+            this.ctx.fillStyle = '#ffffff';
+            this.ctx.font = '24px monospace';
+            this.ctx.textAlign = 'center';
+            this.ctx.fillText(`WPM: ${Math.round(this.displayWpm)}      WORDS TYPED: ${wordsTyped}      MAX COMBO: ${this.maxCombo}`, w / 2, h / 3 - 90);
+
             this.ctx.fillStyle = '#00ffcc';
             this.ctx.font = '30px monospace';
-            this.ctx.textAlign = 'center';
             this.ctx.fillText('INCOMING TRANSMISSIONS...', w / 2, h / 3);
 
             if (this.pendingBranches) {
@@ -1404,7 +1422,7 @@ export class GameEngine {
 
         // Draw Progress Fill inside the Text Box
         if (progress > 0) {
-            this.ctx.fillStyle = 'rgba(0, 255, 204, 0.15)'; // Subtle semi-transparent cyan
+            this.ctx.fillStyle = 'rgba(0, 255, 204, 0.35)'; // Brighter semi-transparent cyan
             this.ctx.fillRect(w / 2 - 400, h - 100, 800 * progress, 80);
         }
 
@@ -1506,7 +1524,7 @@ export class GameEngine {
 
             // Draw untyped
             const typedWidth = this.ctx.measureText(typedInLine).width;
-            this.ctx.fillStyle = this.scramblerTimer > 0 ? '#ffff00' : '#555555';
+            this.ctx.fillStyle = this.scramblerTimer > 0 ? '#ffff00' : '#aaaaaa';
             this.ctx.fillText(untypedInLine, startX + typedWidth, lineY);
 
             // Draw cursor if this is the active line
@@ -1535,11 +1553,11 @@ export class GameEngine {
         });
 
         // Draw Level Indicator
-        let levelText = `LEVEL ${this.currentRound}`;
-        if (this.currentRound > 1 && this.lockedWpm < 70) {
-            if (this.currentRound >= 3) levelText = 'BOSS';
+        let levelText = `LEVEL ${this.currentLevel}`;
+        if (this.currentLevel > 1 && this.lockedWpm < 70) {
+            if (this.currentLevel >= 3) levelText = 'BOSS';
         } else {
-            if (this.currentRound >= 4) levelText = 'BOSS';
+            if (this.currentLevel >= 4) levelText = 'BOSS';
         }
 
         this.ctx.textAlign = 'center';

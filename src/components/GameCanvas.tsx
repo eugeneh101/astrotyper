@@ -25,13 +25,15 @@ export default function GameCanvas() {
     const [victoryStats, setVictoryStats] = useState<{
         wpm: number;
         wordsTyped: number;
+        maxCombo: number;
         story: string;
     } | null>(null);
     const [defeatStats, setDefeatStats] = useState<{
         wpm: number;
         wordsTyped: number;
+        maxCombo: number;
         story: string;
-        roundNum: number;
+        levelNum: number;
         lockedWpm: number;
         storySoFar: string;
         waveText: string;
@@ -211,7 +213,7 @@ export default function GameCanvas() {
                         }}
                     >
                         WPM: {victoryStats.wpm} &nbsp;|&nbsp; Words Typed:{' '}
-                        {victoryStats.wordsTyped}
+                        {victoryStats.wordsTyped} &nbsp;|&nbsp; Max Combo: {victoryStats.maxCombo}
                     </h2>
                     <div
                         ref={storyRef}
@@ -289,7 +291,7 @@ export default function GameCanvas() {
                         }}
                     >
                         WPM: {defeatStats.wpm} &nbsp;|&nbsp; Words Typed:{' '}
-                        {defeatStats.wordsTyped}
+                        {defeatStats.wordsTyped} &nbsp;|&nbsp; Max Combo: {defeatStats.maxCombo}
                     </h2>
                     <div
                         ref={storyRef}
@@ -329,7 +331,7 @@ export default function GameCanvas() {
                         onClick={() => {
                             setDefeatStats(null);
                             engineRef.current?.replayLevel(
-                                defeatStats.roundNum,
+                                defeatStats.levelNum,
                                 defeatStats.lockedWpm,
                                 defeatStats.storySoFar,
                                 defeatStats.waveText,
