@@ -27,5 +27,14 @@ Welcome to the Type Your Adventure codebase. This project follows strict Agentic
 
 ## 6. Code Style
 *   **Python Named Parameters:** When calling custom Python functions (not built-ins), always use named parameters (keyword arguments) rather than positional arguments. This improves readability and maintainability.
-*   **JavaScript / TypeScript Strings:** Always prefer using single quotes (`'`) over double quotes (`"`) for strings when feasible. This aligns with modern JS/TS ecosystem conventions (Prettier, StandardJS).
 *   **Python Strings:** Always prefer using double quotes (`"`) over single quotes (`'`) for strings when feasible, aligning with PEP-8 formatting standards like Black.
+*   **Python Formatting:** Before committing or finalizing Python changes, always run `isort` to organize imports, followed immediately by `black` to format the code perfectly.
+*   **JavaScript / TypeScript Strings:** Always prefer using single quotes (`'`) over double quotes (`"`) for strings when feasible. This aligns with modern JS/TS ecosystem conventions (Prettier, StandardJS).
+*   **Javascript/TypeScript Linting:** Ensure all JS/TS files are formatted cleanly (e.g. using Prettier if available in the workspace) and adhere strictly to ESLint rules. 
+
+## 7. Framework Rules
+<!-- BEGIN:nextjs-agent-rules -->
+# This is NOT the Next.js you know
+
+This version has breaking changes — APIs, conventions, and file structure may all differ from your training data. Read the relevant guide in `node_modules/next/dist/docs/` before writing any code. Heed deprecation notices.
+<!-- END:nextjs-agent-rules -->

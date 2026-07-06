@@ -1,0 +1,21 @@
+{
+  "genres": [
+    "Space Exploration (Discovering vibrant new alien worlds and strange ecosystems)",
+    "Sci-Fi Comedy (Bumbling crew members, snarky AI, and absurd situations)",
+    "Cyberpunk Heist (Fast-paced sneaking, gadgets, and hacking in a neon metropolis)",
+    "Cosmic Mystery (Solving ancient alien puzzles and decoding strange signals)",
+    "Space Western (Rebel smugglers and scrappy bounty hunters on a lawless frontier)",
+    "Time-Slip Adventure (Accidental jumps through time, encountering fun paradoxes)",
+    "Sci-Fi Rescue Mission (A daring, high-stakes dash to save a stranded companion)"
+  ],
+  "archetypes": [
+    "Aggressive / Combat (Direct confrontation, brute force)",
+    "Stealth / Evasion (Sneaking, hiding, running away)",
+    "Diplomacy / Bluffing (Talking, negotiating, deceiving)",
+    "Technological / Hacking (Overriding systems, slicing terminals, deploying drones)",
+    "Environmental / Tactical (Using the surroundings, e.g., shooting a coolant pipe)",
+    "Reckless / Chaotic (Highly unpredictable, desperate maneuvers)",
+    "Sacrificial / Heroic (Taking a hit to save someone, drawing fire)",
+    "Psionic / Alien (Using weird artifacts, telepathy, or unknown tech)"
+  ]
+}

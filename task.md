@@ -47,12 +47,24 @@
   - `[x]` Balance Bosses (5 Dreadnought patterns, adjusted fire rates, 4s BioBoss QTE)
   - `[x]` Add real-time WPM metrics to end-of-level branching screen
   - `[x]` UI brightness tweaks for textbot progress and untyped characters
+  - `[x]` Fix LLM prefetch trigger bypassing due to redundant nested guard clause
+  - `[x]` Shift enemy bounding text box vertically to prevent overlap with thruster visuals
+  - `[x]` Fix Words Typed metric inflation on defeat screen by introducing exact character tracking
+  - `[x]` Prevent untyped Level 1 narrative leaking into Mission Failed story log
 - `[x]` Phase 7: LLM Evaluation & Terminology Overhaul
   - `[x]` Implement `run_evals.py` LLM-as-a-judge test suite
   - `[x]` Create `basic-dataset.json` with True Positive and True Negative edge cases
   - `[x]` Inject dynamic agent `SYSTEM_PROMPT` into judge logic for strict constraint verification
+  - `[x]` Write dynamic WPM word-scaling evaluation test cases
+  - `[x]` Write `generate_seed_stories` evaluation test cases
   - `[x]` Global terminology refactor: Replace "round" with "level" project-wide
   - `[x]` Fix syntax bug (`Math.level`) caused by terminology refactor
+- `[x]` Phase 7.5: Architecture Security & DevOps Polish
+  - `[x]` Establish AGENTS.md rules for code style and linting (Python Black/isort, JS ESLint/Prettier)
+  - `[x]` Create `requirements-dev.txt` to isolate development tools
+  - `[x]` Pin exact package versions in `requirements.txt` to guarantee deterministic Vercel deployments
+  - `[x]` Consolidate root AGENTS.md framework rules into `.agents/AGENTS.md` and remove redundancy
+  - `[x]` Update `threat_model.md` to reflect LLM evaluation safeguards and supply chain pinning
 - `[ ]` Stretch Goal: End Screen Text-to-Speech (TTS)
 - `[ ]` Stretch Goal: Sound Effects / BGM
 - `[ ]` Stretch Goal: Log important game play metrics

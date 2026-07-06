@@ -379,7 +379,7 @@ export class Enemy {
 
     ctx.restore(); // Restore rotation so text stays upright!
 
-    // Draw the word below the ship - ONLY if game is active
+    // Draw the word above the ship - ONLY if game is active
     if (!isGameOver) {
       ctx.font = 'bold 18px monospace';
       ctx.textAlign = 'left';
@@ -396,20 +396,20 @@ export class Enemy {
       if (isActive) {
         // Solid dark background to ensure readability over boss tentacles
         ctx.fillStyle = 'rgba(0, 0, 0, 0.85)';
-        ctx.fillRect(startX - 4, 15, fullWidth + 8, 25);
+        ctx.fillRect(startX - 4, -50, fullWidth + 8, 25);
 
         // Cyan border
         ctx.strokeStyle = 'rgba(0, 255, 204, 0.8)';
         ctx.lineWidth = 2;
-        ctx.strokeRect(startX - 4, 15, fullWidth + 8, 25);
+        ctx.strokeRect(startX - 4, -50, fullWidth + 8, 25);
       }
 
       ctx.fillStyle = '#00ffcc'; // typed is green
-      ctx.fillText(typedPart, startX, 35);
+      ctx.fillText(typedPart, startX, -30);
 
       // Active word is bright white, inactive is dark grey
       ctx.fillStyle = isActive ? '#ffffff' : '#666666';
-      ctx.fillText(untypedPart, startX + typedWidth, 35);
+      ctx.fillText(untypedPart, startX + typedWidth, -30);
     }
 
     ctx.restore();

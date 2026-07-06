@@ -1,8 +1,9 @@
-import time
 import logging
-from fastapi import FastAPI, Request, HTTPException
-from pydantic import BaseModel, Field
+import time
+
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, Request
+from pydantic import BaseModel, Field
 
 load_dotenv(".env.local")
 
@@ -21,12 +22,14 @@ class GameState(BaseModel):
     story_so_far: str = Field(
         ..., max_length=15000, description="The accumulated story text"
     )
-    player_health: int = Field(..., ge=0, le=100)
     player_wpm: int = Field(..., ge=0, le=2000)
     current_level: int = Field(..., ge=1, le=50)
+    selected_genres: list[str] | None = Field(default=None)
+    selected_archetypes: list[str] | None = Field(default=None)
+    selected_genre: str | None = Field(default=None)
 
 
-from api.agent import generate_narrative as run_agent
+from api.agent import generate_branches, generate_seed_stories
 
 
 def check_rate_limit(client_ip: str):
@@ -65,12 +68,15 @@ async def generate_narrative_endpoint(request: Request, state: GameState):
 
     # 2. Process Game State
     try:
-        response = run_agent(
-            story_so_far=state.story_so_far,
-            player_health=state.player_health,
-            player_wpm=state.player_wpm,
-            current_level=state.current_level,
-        )
+        if state.current_level <= 1:
+            response = generate_seed_stories(selected_genres=state.selected_genres)
+        else:
+            response = generate_branches(
+                selected_genre=state.selected_genre,
+                selected_archetypes=state.selected_archetypes,
+                story_so_far=state.story_so_far,
+                player_wpm=state.player_wpm,
+            )
         return response
     except Exception as e:
         logger.error(f"Error generating narrative: {e}")

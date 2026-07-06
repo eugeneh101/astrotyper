@@ -35,12 +35,10 @@ describe('GameEngine Input Handling', () => {
     expect(engine.state).toBe('MENU');
   });
 
-  test('Pressing space in MENU should start game and set to PLAYING', () => {
+  test('Pressing space in MENU should start game and set to BRANCHING', () => {
     engine.handleInput(' ');
-    expect(engine.state).toBe('PLAYING');
-    expect(engine.currentStoryText).toBe(
-      'Sensors detect incoming hostile anomalies.',
-    );
+    expect(engine.state).toBe('BRANCHING');
+    expect(engine.currentLevel).toBe(0);
   });
 
   test('Pressing 1 in BRANCHING should select branch and set to WARPING', () => {
@@ -62,8 +60,26 @@ describe('GameEngine Input Handling', () => {
     expect(engine.nextWaveText).toBe('Evasive maneuvers engaged.');
   });
 
+  test('Pressing 1 in BRANCHING should be ignored if still Establishing Comms', () => {
+    engine.state = 'BRANCHING'; // Manually enter Branching state for test
+
+    // Mock the next branches with the loading placeholder
+    engine.setNextBranches([
+      {
+        action_summary: 'Establishing Comms...',
+        full_narrative: '',
+      }
+    ]);
+
+    // Try to select Branch 1
+    engine.handleInput('1');
+
+    // Should ignore input and remain in BRANCHING state
+    expect(engine.state).toBe('BRANCHING');
+  });
+
   test('Correct keystrokes in PLAYING should advance globalTypedText', () => {
-    engine.handleInput(' '); // Sets state to PLAYING with default text
+    engine.startGameForTest(); // Sets state to PLAYING with default text
 
     expect(engine.globalTypedText).toBe('');
 
@@ -81,8 +97,30 @@ describe('GameEngine Input Handling', () => {
     expect(engine.globalTypedText).toBe('Se');
   });
 
+  test('onPrefetchRequested should be called when typing progress >= 70%', () => {
+    engine.startGameForTest(); // Text: "Sensors detect incoming hostile anomalies." (42 chars)
+    
+    const mockPrefetch = jest.fn();
+    engine.onPrefetchRequested = mockPrefetch;
+    
+    // 70% of 42 is ~30 chars.
+    // Let's type "Sensors detect incoming " (24 chars) - Not enough
+    const part1 = "Sensors detect incoming ";
+    for (const char of part1) {
+      engine.handleInput(char);
+    }
+    expect(mockPrefetch).not.toHaveBeenCalled();
+
+    // Type "hostile" (7 chars) -> total 31 chars > 70%
+    const part2 = "hostile";
+    for (const char of part2) {
+      engine.handleInput(char);
+    }
+    expect(mockPrefetch).toHaveBeenCalledTimes(1);
+  });
+
   test('onDefeat should fire once, and reset correctly after replayLevel', () => {
-    engine.handleInput(' '); // Set to PLAYING
+    engine.startGameForTest(); // Set to PLAYING
 
     const mockOnDefeat = jest.fn();
     engine.onDefeat = mockOnDefeat;
@@ -114,5 +152,32 @@ describe('GameEngine Input Handling', () => {
 
     // It should have fired a second time!
     expect(mockOnDefeat).toHaveBeenCalledTimes(2);
+  });
+
+  test('Mission failed on Level 1 with 0 typing should have 0 words typed and no untyped story text', () => {
+    engine.state = 'BRANCHING';
+    engine.currentLevel = 0;
+    engine.setNextBranches([
+      {
+        action_summary: 'Escape the station',
+        full_narrative: 'Dust kicked up from the floorboards.',
+      },
+    ]);
+    engine.handleInput('1');
+    
+    expect(engine.state).toBe('PLAYING');
+    
+    const mockOnDefeat = jest.fn();
+    engine.onDefeat = mockOnDefeat;
+    
+    engine.state = 'GAMEOVER';
+    (engine as any).update(3.1);
+    
+    expect(mockOnDefeat).toHaveBeenCalledTimes(1);
+    const stats = mockOnDefeat.mock.calls[0][0];
+    
+    expect(stats.wordsTyped).toBe(0);
+    expect(stats.story).not.toContain('Dust kicked up');
+    expect(stats.story).toContain('Escape the station');
   });
 });

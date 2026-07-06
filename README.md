@@ -1,36 +1,82 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🌌 AstroTyper: Infinite Odyssey 
 
-## Getting Started
+Welcome to **AstroTyper: Infinite Odyssey** — an AI-driven Sci-Fi Typing RPG powered by the **Google GenAI SDK**. 
 
-First, run the development server:
+This isn't your grandfather's typing game. It is a showcase of pure **Agentic Engineering**. Built from the ground up to demonstrate how Large Language Models (LLMs) can act as real-time, dynamic Game Masters, AstroTyper leverages structured Pydantic outputs and agentic workflows to seamlessly blend high-octane 60fps action with infinite AI storytelling.
 
+## 🔥 Why This is Mind-Blowing
+
+*   **Pure Agentic Architecture:** We didn't just plug in an API; we engineered an agentic system. We adhered strictly to best practices, entirely rejecting "vibe coding" (which is essentially hope-driven development). Leveraging the Google GenAI SDK and the Gemini API, the backend Game Master is strictly governed by stateless memory graphs, robust Pydantic data bounds, and rigid system prompts that force the LLM to behave like a deterministic game engine rather than a stochastic chatbot.
+*   **Dynamic WPM Difficulty Scaling:** The Google Gemini API doesn't just write text; it *engineers* it. By passing your real-time Words-Per-Minute (WPM) to the backend, the LLM mathematically scales the word count, complexity, and sentence structure of the incoming wave to perfectly match your skill level.
+*   **The "LLM-as-a-Judge" QA Suite:** How do you test an AI that can say anything? We built a pure Python offline evaluation suite (`run_evals.py`) that uses a secondary LLM judge to deterministically grade the Game Master against negative constraints. It ensures the AI *never* breaks the 4th wall, never hallucinates game mechanics, and always hits exact word count targets.
+*   **Bullet Hell Meets Typing:** Forget static words on a screen. Every keystroke is a plasma bolt. You're fighting Kamikaze fighters, Strafing bio-entities, and massive Cybernetic Dreadnoughts with multi-phase laser attacks, all rendered natively in a custom HTML5 Canvas engine.
+
+## 🛠️ Tech Stack
+
+*   **Frontend:** React, Next.js (App Router), HTML5 Canvas Engine, Vanilla CSS
+*   **Backend:** Python, FastAPI, Vercel Serverless Functions
+*   **AI:** Google Gemini API (via Google GenAI SDK)
+*   **Testing:** Jest (Canvas Engine Math), Python LLM Judge (Prompt Evaluation)
+
+---
+
+## 🚀 Quick Start Guide
+
+Want to run the game locally? Follow these steps!
+
+### 1. Prerequisites
+*   Node.js (v18+)
+*   Python (3.10+)
+*   A Google Gemini API Key
+
+### 2. Environment Setup
+Create a `.env.local` file in the root of the project for backend API secrets:
+```env
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL=gemini-3.1-flash-lite
+API_TIMEOUT_MS=9000
+```
+Additionally, all frontend game mechanics and tuning dials (e.g., maximum health, spawn rates, and boss difficulty) are centrally configured in the `src/gameConfig.ts` parameter file.
+
+### 3. Install Frontend Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 4. Install Backend Dependencies
+Set up your Python virtual environment and install the rigidly pinned backend dependencies:
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.txt
+```
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 5. Run the Game!
+To run the full stack locally, you need to start both the Python backend and the Next.js frontend in separate terminal windows:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+**Terminal 1: Start the Python Backend**
+```bash
+source .venv/bin/activate
+uvicorn api.index:app --port 8000 --reload
+```
 
-## Learn More
+**Terminal 2: Start the Next.js Frontend**
+```bash
+npm run dev
+```
+Navigate to `http://localhost:3000` in your browser and start typing!
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🧪 Running the Test Suites
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+**1. Run the Frontend Math & Physics Tests (Jest)**
+```bash
+npx jest
+```
 
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+**2. Run the AI Narrative Evaluations (Python LLM Judge)**
+```bash
+source .venv/bin/activate
+python tests/eval/run_evals.py
+```

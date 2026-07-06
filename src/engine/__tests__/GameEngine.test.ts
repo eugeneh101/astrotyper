@@ -42,14 +42,14 @@ describe('GameEngine - Core Typing Logic', () => {
     engine = new GameEngine(mockCanvas);
   });
 
-  it('Transitions from MENU to PLAYING when SPACE is pressed', () => {
+  it('Transitions from MENU to BRANCHING when SPACE is pressed', () => {
     expect(engine.state).toBe('MENU');
     engine.handleInput(' '); // Press Space
-    expect(engine.state).toBe('PLAYING');
+    expect(engine.state).toBe('BRANCHING');
   });
 
   it('Increases combo for a correct keystroke', () => {
-    engine.handleInput(' '); // Start game. Spawns "Sensors detect incoming hostile anomalies."
+    engine.startGameForTest(); // Spawns "Sensors detect incoming hostile anomalies."
 
     const initialCombo = engine.combo;
 
@@ -60,7 +60,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Resets combo back to 0 for an incorrect keystroke', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
 
     engine.handleInput('S'); // Correct key
     expect(engine.combo).toBe(1);
@@ -70,7 +70,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Decouples spacebar from enemies but requires it to be typed in the global string', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     (engine as any).update(0.016); // Spawn first enemy from queue
 
     // Type "Sensors"
@@ -95,7 +95,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Executes the Point-Blank Leech mechanic when an enemy hits the shield', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     (engine as any).update(0.016); // Spawn first enemy from queue
     const enemy = (engine as any).enemies[0];
 
@@ -125,7 +125,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Dead enemies (ghosts) do not interact with the player shield', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     (engine as any).update(0.016); // Spawn first enemy from queue
 
     // Type "Sensors" to kill the first enemy
@@ -149,7 +149,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Triggers GAMEOVER and a PlayerDeathExplosion when health reaches 0', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     expect(engine.state).toBe('PLAYING');
 
     // Artificially reduce health to 0
@@ -170,7 +170,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Player takes continuous damage from Dreadnought beam attack', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     
     // Artificially inject a Dreadnought boss and force it to fire its laser
     const BossEntities = require('../BossEntities');
@@ -190,7 +190,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Player ship rotates to point towards the active enemy when typing', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     expect((engine as any).playerAngle).toBe(0); // Neutral start
 
     // Inject an enemy at the top left of the screen
@@ -220,7 +220,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Maintains perfect sync between globalTypedText and activeEnemy.typedChars', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
 
     // Inject a boss and boss targets just like in the real game
     const BossEntities = require('../BossEntities');
@@ -263,7 +263,7 @@ describe('GameEngine - Core Typing Logic', () => {
   it('Strictly caps enemy spawns at low health (Dynamic Difficulty)', () => {
     // Setup a game with >10 enemies in queue
     (engine as any).currentStoryText = "Word one two three four five six seven eight nine ten eleven twelve thirteen fourteen fifteen.";
-    engine.handleInput(' ');
+    engine.startGameForTest();
     (engine as any).health = 0; // Absolute 0 health -> TARGET_DENSITY should drop exactly to 4
     (engine as any).spawnTimer = 0; // Force immediate spawn
 
@@ -282,7 +282,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Does not allow globalTypedText to outpace enemy spawning when typing fast', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     
     // Simulate spawnWave logic for a regular level (not boss level)
     const text = "Sensors detect";
@@ -332,7 +332,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Does not crash with ReferenceError when processing Boss bullets', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     engine.currentLevel = 4; // Boss level
     (engine as any).isBossLevel = true;
     (engine as any).state = 'PLAYING';
@@ -361,7 +361,7 @@ describe('GameEngine - Core Typing Logic', () => {
   });
 
   it('Deflector shield active time decreases and enters cooldown', () => {
-    engine.handleInput(' '); // Start game
+    engine.startGameForTest();
     engine.currentLevel = 4; // Boss level
     (engine as any).isBossLevel = true;
     (engine as any).state = 'PLAYING';

@@ -87,6 +87,7 @@ To ensure the game doesn't break, the LLM cannot return raw text; it must return
 
 **Output from Python Agent (Enforced via Gemini JSON Schema):**
 The agent returns 3 distinct narrative branches. Each branch contains a short action summary AND the full 10-sentence story for that path.
+To ensure overarching narrative consistency across levels, the initial `selected_genre` is passed to the Agent prompt.
 ```json
 {
   "branches": [
@@ -136,9 +137,9 @@ When the game first loads, the backend randomly selects **3 distinct sub-genres*
     *   *Military Sci-Fi* (Tactical battles against alien invasions)
     *   *Cosmic Mystery* (Decoding strange alien signals or anomalies)
 *   The game displays the `action_summary` (the hook or first sentence) of the 3 generated seeds on the Main Menu so the player can see exactly what kind of narrative flavor they are getting into.
-*   The player starts the game by **typing** the hook of the seed they want. 
-*   Once typed, the 90-word `full_narrative` of that chosen seed immediately begins as Level 1, and enemies start spawning. 
-*   The other 2 unchosen seed stories are permanently discarded from the ADK Agent's memory graph.
+*   The player starts the game by **pressing the spacebar**, which transitions to an 'INCOMING TRANSMISSIONS' branching screen where they select one of the 3 seed stories by pressing **'1', '2', or '3'**. 
+*   Once selected, the 90-word `full_narrative` of that chosen seed immediately begins as Level 1, and enemies start spawning. 
+*   The other 2 unchosen seed stories are permanently discarded from the ADK Agent's memory graph, but the chosen genre is tracked to maintain thematic consistency for future levels.
 
 ---
 > [!IMPORTANT]

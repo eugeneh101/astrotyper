@@ -58,6 +58,41 @@
           }
         ]
       }
+    },
+    {
+      "id": "case_6_low_wpm_scaling",
+      "story_so_far": "The reactor core begins to melt down.",
+      "player_wpm": 30,
+      "current_level": 2,
+      "description": "True Positive (Good Response expected from Agent): Low WPM should yield ~45 words."
+    },
+    {
+      "id": "case_7_high_wpm_scaling",
+      "story_so_far": "You hack into the main mainframe.",
+      "player_wpm": 110,
+      "current_level": 2,
+      "description": "True Positive (Good Response expected from Agent): High WPM should yield ~120 words."
+    },
+    {
+      "id": "case_8_bad_typography",
+      "story_so_far": "You find an ancient alien artifact.",
+      "player_wpm": 60,
+      "current_level": 2,
+      "description": "True Negative (Testing Judge): Intentional bad response with forbidden typography.",
+      "intentional_bad_response": {
+        "branches": [
+          {
+            "action_summary": "Examine the artifact",
+            "full_narrative": "It glows—a deep, resonant hum—and someone whispers, “You shouldn’t be here.”"
+          }
+        ]
+      }
+    },
+    {
+      "id": "case_9_seed_stories",
+      "function": "generate_seed_stories",
+      "selected_genres": ["Space Western", "Sci-Fi Horror", "Cyberpunk"],
+      "description": "True Positive (Good Response expected from Agent): Seed stories should yield ~90 words."
     }
   ]
 }

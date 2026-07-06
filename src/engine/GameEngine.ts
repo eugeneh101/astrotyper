@@ -1,4 +1,5 @@
 import { GAME_CONFIG } from '../gameConfig';
+import narrativeConfig from '../../config/narrative.json';
 import { Enemy, Laser, Explosion, PlayerDeathExplosion } from './Entities';
 import { Boss, DreadnoughtBoss, BioBoss, Bullet } from './BossEntities';
 
@@ -30,6 +31,7 @@ export class GameEngine {
         wordsTyped: number;
         maxCombo: number;
         story: string;
+        selectedGenre?: string | null;
     }) => void;
     public onDefeat?: (stats: {
         wpm: number;
@@ -40,18 +42,24 @@ export class GameEngine {
         lockedWpm: number;
         storySoFar: string;
         waveText: string;
+        selectedGenre?: string | null;
     }) => void;
     public deathAnimationTimer: number = 0;
     public onPrefetchRequested?: (
         wpm: number,
         health: number,
         level: number,
+        selectedGenres?: string[],
+        selectedArchetypes?: string[],
+        selectedGenre?: string,
     ) => void;
+    public selectedGenre: string | null = null;
     private prefetchTriggered: boolean = false;
     private levelStartTime: number = 0;
     private levelEndTime: number = 0;
     private pendingBranches:
         { action_summary: string; full_narrative: string }[] | null = null;
+    private currentBranchTitles: string[] | null = null;
     public lockedWpm: number = 0;
     public warpTimer: number = 0;
     public shipVisualY: number = 0;
@@ -68,6 +76,7 @@ export class GameEngine {
 
     // Original story text to show in HUD
     public globalTypedText: string = '';
+    public cumulativeTypedChars: number = 0;
     public displayWpm: number = 0;
     public previousLineIdx: number = 0;
     public scramblerTimer: number = 0;
@@ -157,6 +166,14 @@ export class GameEngine {
         this.loop(this.lastTime);
     }
 
+    public startGameForTest() {
+        this.state = 'PLAYING';
+        this.currentLevel = 1;
+        this.combo = 0;
+        this.maxCombo = 0;
+        this.spawnWave('Sensors detect incoming hostile anomalies.');
+    }
+
     public stop() {
         cancelAnimationFrame(this.animationFrameId);
         window.removeEventListener('resize', this.handleResize);
@@ -164,10 +181,30 @@ export class GameEngine {
 
     public handleInput(key: string) {
         if (this.state === 'MENU' && key === ' ') {
-            this.state = 'PLAYING';
+            this.state = 'BRANCHING';
+            this.currentLevel = 0;
             this.combo = 0;
             this.maxCombo = 0;
-            this.spawnWave('Sensors detect incoming hostile anomalies.');
+            this.fullStoryHistory = '';
+            this.globalTypedText = '';
+            this.currentStoryText = '';
+            this.pendingBranches = null; // Forces "INCOMING TRANSMISSIONS..." view
+
+            // Randomly pick 3 genres for Level 1
+            const shuffled = [...narrativeConfig.genres].sort(() => 0.5 - Math.random());
+            const selectedGenres = shuffled.slice(0, 3);
+
+            // Set temporary branches to display the genres in the UI while loading
+            this.currentBranchTitles = selectedGenres;
+            this.pendingBranches = selectedGenres.map(g => ({
+                action_summary: "Establishing Comms...",
+                full_narrative: ""
+            }));
+
+            // Fetch actual branches from LLM
+            if (this.onPrefetchRequested) {
+                this.onPrefetchRequested(0, this.health, 1, selectedGenres, undefined);
+            }
             return;
         }
 
@@ -181,10 +218,10 @@ export class GameEngine {
                 const idx = parseInt(key) - 1;
                 if (this.pendingBranches && this.pendingBranches[idx]) {
                     const selected = this.pendingBranches[idx];
+                    
+                    // Prevent selection if the LLM has not returned yet
+                    if (selected.action_summary === 'Establishing Comms...') return;
 
-                    // Enter hyperdrive!
-                    this.state = 'WARPING';
-                    this.warpTimer = 2.0;
                     this.combo = 0;
                     this.maxCombo = 0;
 
@@ -194,13 +231,32 @@ export class GameEngine {
                         ':\n' +
                         selected.full_narrative;
 
-                    // Clear the screen for warp
+                    // Clear the screen for warp/start
                     this.enemies = [];
                     this.lasers = [];
                     this.explosions = [];
-                    this.currentStoryText = 'ENTERING HYPERSPACE...';
+                    if (this.currentLevel > 0) {
+                        this.cumulativeTypedChars += this.globalTypedText.length;
+                    }
                     this.globalTypedText = '';
-                    this.nextWaveText = selected.full_narrative;
+                    this.activeEnemyIndex = 0;
+
+                    if (this.currentLevel === 0) {
+                        if (this.currentBranchTitles) {
+                            this.selectedGenre = this.currentBranchTitles[idx];
+                        }
+                        // Skip the hyperdrive animation on game start, drop right into Level 1
+                        this.currentLevel = 1;
+                        this.state = 'PLAYING';
+                        this.currentStoryText = '';
+                        this.spawnWave(selected.full_narrative);
+                    } else {
+                        // Enter hyperdrive!
+                        this.state = 'WARPING';
+                        this.warpTimer = 2.0;
+                        this.currentStoryText = 'ENTERING HYPERSPACE...';
+                        this.nextWaveText = selected.full_narrative;
+                    }
                 }
             }
             return;
@@ -309,7 +365,7 @@ export class GameEngine {
                                 const singularityX = canvasW / 2;
                                 const singularityY = canvasH / 2;
 
-                                let shrinkInterval = setInterval(() => {
+                                const shrinkInterval = setInterval(() => {
                                     if (this.boss) {
                                         progress += 0.025;
                                         const accel = 1 + progress * progress * 4; // Accelerating pull
@@ -372,13 +428,14 @@ export class GameEngine {
                                             if (this.onVictory && !this.victoryFired) {
                                                 this.victoryFired = true;
                                                 const wordsTyped = Math.floor(
-                                                    this.fullStoryHistory.length / 5,
+                                                    (this.cumulativeTypedChars + this.globalTypedText.length) / 5,
                                                 );
                                                 this.onVictory({
                                                     wpm: Math.round(this.displayWpm),
                                                     wordsTyped,
                                                     maxCombo: this.maxCombo,
-                                                    story: this.fullStoryHistory,
+                                                    story: this.fullStoryHistory.trim(),
+                                                    selectedGenre: this.selectedGenre,
                                                 });
                                             }
                                         }, 3000);
@@ -426,7 +483,16 @@ export class GameEngine {
                             if (this.currentLevel === 2) {
                                 this.lockedWpm = wpm;
                             }
-                            this.onPrefetchRequested(wpm, this.health, this.currentLevel);
+
+                            // Randomly select archetypes for Mid-Game Branching
+                            const shuffledArchetypes = [...narrativeConfig.archetypes].sort(() => 0.5 - Math.random());
+                            const selectedArchetypes = shuffledArchetypes.slice(0, 3);
+                            this.currentBranchTitles = selectedArchetypes;
+
+                            if (this.onPrefetchRequested) {
+                                // No need to set prefetchTriggered = true again, already done
+                                this.onPrefetchRequested(wpm, this.health, this.currentLevel, undefined, selectedArchetypes, this.selectedGenre || undefined);
+                            }
                         }
                     }
                 }
@@ -472,7 +538,7 @@ export class GameEngine {
     ) {
         this.currentLevel = levelNum;
         this.lockedWpm = lockedWpm;
-        this.fullStoryHistory = levelNum === 1 ? '' : storySoFar;
+        this.fullStoryHistory = storySoFar;
         this.health = GAME_CONFIG.PLAYER_MAX_HEALTH;
         this.state = 'PLAYING';
         this.defeatFired = false;
@@ -485,7 +551,6 @@ export class GameEngine {
         text = text.trim().replace(/\s+/g, ' ');
 
         this.currentStoryText = text;
-        if (this.currentLevel === 1) this.fullStoryHistory += text;
         this.globalTypedText = '';
         this.enemies = [];
         this.lasers = [];
@@ -563,7 +628,7 @@ export class GameEngine {
 
             currentIndex += w.length + 1; // +1 for the space that follows
         });
-        
+
         // Initial spawn happens immediately
         this.spawnTimer = 0;
     }
@@ -774,22 +839,24 @@ export class GameEngine {
                             pastStory.length - this.currentStoryText.length,
                         );
                     }
-                    const accurateStory = pastStory + this.globalTypedText;
+                    
+                    const wordsTyped = Math.floor((this.cumulativeTypedChars + this.globalTypedText.length) / 5);
 
                     onDefeatCallback({
                         wpm: Math.round(this.displayWpm),
-                        wordsTyped: Math.floor(accurateStory.length / 5),
+                        wordsTyped: wordsTyped,
                         maxCombo: this.maxCombo,
-                        story:
+                        story: (
                             pastStory.trim() +
-                            '\n' +
-                            this.globalTypedText.trim() +
+                            (this.globalTypedText.trim() ? '\n' + this.globalTypedText.trim() : '') +
                             '\n\n' +
-                            terminalErrors.trim(),
+                            terminalErrors.trim()
+                        ).trim(),
                         levelNum: this.currentLevel,
                         lockedWpm: this.lockedWpm,
                         storySoFar: this.fullStoryHistory,
                         waveText: this.currentStoryText,
+                        selectedGenre: this.selectedGenre,
                     });
                 }
             }
@@ -855,7 +922,7 @@ export class GameEngine {
 
         if (this.activeEnemyIndex < this.enemies.length && this.state === 'PLAYING') {
             const activeEnemy = this.enemies[this.activeEnemyIndex];
-            
+
             if (activeEnemy.typedChars > 0) {
                 const targetAngle = Math.atan2(activeEnemy.y - playerY, activeEnemy.x - playerX) + Math.PI / 2; // +90 deg offset
                 // Simple Lerp (Linear Interpolation)
@@ -913,7 +980,7 @@ export class GameEngine {
                 }
             } else if (e.type === 'scrambler' && (e as any).hasFiredCharge) {
                 (e as any).hasFiredCharge = false;
-                
+
                 // No health damage, just a visual scramble
                 this.scramblerTimer = GAME_CONFIG.ENEMY_SCRAMBLER_DURATION;
                 this.explosions.push(
@@ -1377,12 +1444,15 @@ export class GameEngine {
             this.ctx.fillStyle = 'rgba(0, 0, 0, 0.8)';
             this.ctx.fillRect(0, 0, w, h);
 
-            // Draw End-of-Level Metrics
-            const wordsTyped = Math.round(this.globalTypedText.length / 5);
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.font = '24px monospace';
             this.ctx.textAlign = 'center';
-            this.ctx.fillText(`WPM: ${Math.round(this.displayWpm)}      WORDS TYPED: ${wordsTyped}      MAX COMBO: ${this.maxCombo}`, w / 2, h / 3 - 90);
+
+            // Draw End-of-Level Metrics (Skip on the initial Level 1 start screen)
+            if (this.currentLevel > 0) {
+                const wordsTyped = Math.round(this.globalTypedText.length / 5);
+                this.ctx.fillStyle = '#ffffff';
+                this.ctx.font = '24px monospace';
+                this.ctx.fillText(`WPM: ${Math.round(this.displayWpm)}      WORDS TYPED: ${wordsTyped}      MAX COMBO: ${this.maxCombo}`, w / 2, h / 3 - 90);
+            }
 
             this.ctx.fillStyle = '#00ffcc';
             this.ctx.font = '30px monospace';
@@ -1393,14 +1463,35 @@ export class GameEngine {
                 this.ctx.fillStyle = '#ffffff';
                 this.ctx.fillText('TYPE 1, 2, OR 3 TO SELECT PATH', w / 2, h / 3 + 50);
 
-                this.pendingBranches.forEach((b, i) => {
-                    this.ctx.fillStyle =
-                        i === 0 ? '#ff0055' : i === 1 ? '#00ffcc' : '#ffaa00';
-                    this.ctx.fillText(
-                        `[${i + 1}] ${b.action_summary}`,
-                        w / 2,
-                        h / 2 + i * 60,
-                    );
+                this.pendingBranches.forEach((branch, i) => {
+                    const y = h / 2 - 40 + i * 110; // Increased spacing for the title
+
+                    // Render the Genre/Archetype Title
+                    if (this.currentBranchTitles && this.currentBranchTitles[i]) {
+                        this.ctx.fillStyle = '#ffaa00'; // Orange for title
+                        this.ctx.font = 'bold 22px monospace';
+                        this.ctx.fillText(`${i + 1}) ${this.currentBranchTitles[i]}`, w / 2, y - 25);
+                    }
+
+                    // Render the Action Summary
+                    this.ctx.fillStyle = '#00ffcc';
+                    this.ctx.font = '22px monospace';
+
+                    // Simple word wrapping for branch text
+                    const words = branch.action_summary.split(' ');
+                    let line = '';
+                    let currentY = y;
+                    for (const word of words) {
+                        const testLine = line + word + ' ';
+                        if (this.ctx.measureText(testLine).width > w - 100) {
+                            this.ctx.fillText(line, w / 2, currentY);
+                            line = word + ' ';
+                            currentY += 30;
+                        } else {
+                            line = testLine;
+                        }
+                    }
+                    this.ctx.fillText(line, w / 2, currentY);
                 });
             } else {
                 this.ctx.font = '20px monospace';
@@ -1553,23 +1644,25 @@ export class GameEngine {
         });
 
         // Draw Level Indicator
-        let levelText = `LEVEL ${this.currentLevel}`;
-        if (this.currentLevel > 1 && this.lockedWpm < 70) {
-            if (this.currentLevel >= 3) levelText = 'BOSS';
-        } else {
-            if (this.currentLevel >= 4) levelText = 'BOSS';
+        if (this.state !== 'MENU') {
+            let levelText = `LEVEL ${Math.max(1, this.currentLevel)}`;
+            if (this.currentLevel > 1 && this.lockedWpm < 70) {
+                if (this.currentLevel >= 3) levelText = 'BOSS';
+            } else {
+                if (this.currentLevel >= 4) levelText = 'BOSS';
+            }
+
+            this.ctx.textAlign = 'center';
+            this.ctx.font = 'bold 32px monospace';
+
+            // Give the text a thick black outline so it violently pops out over the boss tentacles
+            this.ctx.lineWidth = 6;
+            this.ctx.strokeStyle = '#000000';
+            this.ctx.strokeText(levelText, w / 2, 40);
+
+            this.ctx.fillStyle = levelText === 'BOSS' ? '#ffaa00' : '#ffffff';
+            this.ctx.fillText(levelText, w / 2, 40);
         }
-
-        this.ctx.textAlign = 'center';
-        this.ctx.font = 'bold 32px monospace';
-
-        // Give the text a thick black outline so it violently pops out over the boss tentacles
-        this.ctx.lineWidth = 6;
-        this.ctx.strokeStyle = '#000000';
-        this.ctx.strokeText(levelText, w / 2, 40);
-
-        this.ctx.fillStyle = levelText === 'BOSS' ? '#ffaa00' : '#ffffff';
-        this.ctx.fillText(levelText, w / 2, 40);
 
         // Draw WPM
         this.ctx.textAlign = 'left';

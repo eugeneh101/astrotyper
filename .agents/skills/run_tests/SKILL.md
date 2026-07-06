@@ -1,6 +1,6 @@
 ---
 name: run-tests
-description: Runs all unit tests (Jest) and Python evaluations (evaluate_narrative.py) for the AstroTyper project, then reports the results. Does NOT refactor or fix any failures unless explicitly asked.
+description: Runs all unit tests (Jest) and Python evaluations (tests/eval/run_evals.py) for the AstroTyper project, then reports the results. Does NOT refactor or fix any failures unless explicitly asked.
 ---
 
 # Run Tests & Evaluations
@@ -21,7 +21,7 @@ This skill runs the full test suite for the AstroTyper project and reports the r
    
    After reporting the Jest results, remind the user to run this command manually in their terminal:
    ```bash
-   .venv/bin/python evaluate_narrative.py
+   .venv/bin/python tests/eval/run_evals.py
    ```
    This requires `GEMINI_API_KEY` in `.env.local`.
 

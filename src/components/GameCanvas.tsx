@@ -27,6 +27,7 @@ export default function GameCanvas() {
         wordsTyped: number;
         maxCombo: number;
         story: string;
+        selectedGenre?: string | null;
     } | null>(null);
     const [defeatStats, setDefeatStats] = useState<{
         wpm: number;
@@ -37,6 +38,7 @@ export default function GameCanvas() {
         lockedWpm: number;
         storySoFar: string;
         waveText: string;
+        selectedGenre?: string | null;
     } | null>(null);
 
     useEffect(() => {
@@ -67,15 +69,20 @@ export default function GameCanvas() {
             wpm: number,
             health: number,
             level: number,
+            selectedGenres?: string[],
+            selectedArchetypes?: string[],
+            selectedGenre?: string,
         ) => {
             fetch('/api/generate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({
                     story_so_far: engineRef.current!.getStorySoFar(),
-                    player_health: Math.round(health),
                     player_wpm: wpm,
                     current_level: level,
+                    selected_genres: selectedGenres,
+                    selected_archetypes: selectedArchetypes,
+                    selected_genre: selectedGenre,
                 }),
             })
                 .then((res) => res.json())
@@ -215,6 +222,19 @@ export default function GameCanvas() {
                         WPM: {victoryStats.wpm} &nbsp;|&nbsp; Words Typed:{' '}
                         {victoryStats.wordsTyped} &nbsp;|&nbsp; Max Combo: {victoryStats.maxCombo}
                     </h2>
+                    {victoryStats.selectedGenre && (
+                        <h3
+                            style={{
+                                color: '#00ffcc',
+                                fontSize: '1.2rem',
+                                marginBottom: '20px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px',
+                            }}
+                        >
+                            GENRE: {victoryStats.selectedGenre}
+                        </h3>
+                    )}
                     <div
                         ref={storyRef}
                         style={{
@@ -293,6 +313,19 @@ export default function GameCanvas() {
                         WPM: {defeatStats.wpm} &nbsp;|&nbsp; Words Typed:{' '}
                         {defeatStats.wordsTyped} &nbsp;|&nbsp; Max Combo: {defeatStats.maxCombo}
                     </h2>
+                    {defeatStats.selectedGenre && (
+                        <h3
+                            style={{
+                                color: '#ffaa00',
+                                fontSize: '1.2rem',
+                                marginBottom: '20px',
+                                textTransform: 'uppercase',
+                                letterSpacing: '2px',
+                            }}
+                        >
+                            GENRE: {defeatStats.selectedGenre}
+                        </h3>
+                    )}
                     <div
                         ref={storyRef}
                         style={{
