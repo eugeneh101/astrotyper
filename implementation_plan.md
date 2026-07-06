@@ -34,7 +34,7 @@ We will build this entirely within a single repository optimized for Vercel's fr
 *   Set up the `/api/python` directory for the backend.
 *   Configure the Python virtual environment, install the Google ADK and `google-genai` SDK, and create a `requirements.txt`.
 *   Create the `vercel.json` to properly route API requests to the Python functions.
-*   **Centralized Configuration:** Create a `.env.local` file for backend secrets (`GEMINI_API_KEY`, `GEMINI_MODEL`, `API_TIMEOUT_MS`) and a frontend `gameConfig.ts` file to expose all mechanical tuning dials.
+*   **Centralized Configuration:** Create a `.env.local` file for backend secrets (`GEMINI_API_KEY`, `GEMINI_MODEL`) and a frontend `gameConfig.ts` file to expose all mechanical tuning dials.
 
 ### Phase 2: The ADK "Game Master" Backend [COMPLETED]
 *   Build the core ADK Agent (`agent.py`).

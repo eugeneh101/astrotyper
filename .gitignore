@@ -27,7 +27,6 @@
 # misc
 .DS_Store
 *.pem
-threat_model.md
 
 # debug
 npm-debug.log*

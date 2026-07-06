@@ -4,12 +4,21 @@ Welcome to **AstroTyper: Infinite Odyssey** — an AI-driven Sci-Fi Typing RPG p
 
 This isn't your grandfather's typing game. It is a showcase of pure **Agentic Engineering**. Built from the ground up to demonstrate how Large Language Models (LLMs) can act as real-time, dynamic Game Masters, AstroTyper leverages structured Pydantic outputs and agentic workflows to seamlessly blend high-octane 60fps action with infinite AI storytelling.
 
+| | | |
+|:---:|:---:|:---:|
+| <img src="assets/1_start_screen.png" alt="Start Screen" width="400" height="400"> | <img src="assets/2_choose_your_genre.png" alt="Choose Your Genre" width="400" height="400"> | <img src="assets/3_level_one.png" alt="Level One" width="400" height="400"> |
+| <img src="assets/4_level_two.png" alt="Level Two" width="400" height="400"> | <img src="assets/5_level_three.png" alt="Level Three" width="400" height="400"> | <img src="assets/6_boss_level.png" alt="Boss Level" width="400" height="400"> |
+| <img src="assets/7_secret_boss_level.png" alt="Secret Boss Level" width="400" height="400"> | <img src="assets/8_mission_accomplished.png" alt="Mission Accomplished" width="400" height="400"> | <img src="assets/9_mission_failed.png" alt="Mission Failed" width="400" height="400"> |
+
 ## 🔥 Why This is Mind-Blowing
 
 *   **Pure Agentic Architecture:** We didn't just plug in an API; we engineered an agentic system. We adhered strictly to best practices, entirely rejecting "vibe coding" (which is essentially hope-driven development). Leveraging the Google GenAI SDK and the Gemini API, the backend Game Master is strictly governed by stateless memory graphs, robust Pydantic data bounds, and rigid system prompts that force the LLM to behave like a deterministic game engine rather than a stochastic chatbot.
+*   **Centralized Specs & Framework Rules:** Instead of hallucinating features, our AI agent was anchored to a strict `game_design_spec.md` source of truth and global `AGENTS.md` constraints to ensure architectural consistency.
+*   **Custom Agent Skills:** We developed explicit, executable skill files (like `/git-commit` and `/stride_threat_model`) that empowered the AI to autonomously navigate complex DevOps and testing workflows.
+*   **STRIDE Threat Modeling:** We treated the GenAI integration as a security surface, generating a systematic `threat_model.md` to mitigate prompt injection and enforce rigid schema validation.
 *   **Dynamic WPM Difficulty Scaling:** The Google Gemini API doesn't just write text; it *engineers* it. By passing your real-time Words-Per-Minute (WPM) to the backend, the LLM mathematically scales the word count, complexity, and sentence structure of the incoming wave to perfectly match your skill level.
 *   **The "LLM-as-a-Judge" QA Suite:** How do you test an AI that can say anything? We built a pure Python offline evaluation suite (`run_evals.py`) that uses a secondary LLM judge to deterministically grade the Game Master against negative constraints. It ensures the AI *never* breaks the 4th wall, never hallucinates game mechanics, and always hits exact word count targets.
-*   **Bullet Hell Meets Typing:** Forget static words on a screen. Every keystroke is a plasma bolt. You're fighting Kamikaze fighters, Strafing bio-entities, and massive Cybernetic Dreadnoughts with multi-phase laser attacks, all rendered natively in a custom HTML5 Canvas engine.
+*   **Bullet Hell Meets Typing:** Forget static words on a screen. Every keystroke is a plasma bolt. You'll face a gauntlet of unique enemy units like parasitic Kamikaze-leeches, Plasma Interceptors, and evasive Scramblers. Survive long enough, and the AI will route you to epic multi-phase Boss Encounters—face down the massive Cybernetic Dreadnought, or unlock the terrifying **Biological Abomination** (a Secret Boss exclusively deployed against players who can sustain a blazing-fast WPM!)
 
 ## 🛠️ Tech Stack
 
@@ -34,7 +43,6 @@ Create a `.env.local` file in the root of the project for backend API secrets:
 ```env
 GEMINI_API_KEY=your_gemini_api_key_here
 GEMINI_MODEL=gemini-3.1-flash-lite
-API_TIMEOUT_MS=9000
 ```
 Additionally, all frontend game mechanics and tuning dials (e.g., maximum health, spawn rates, and boss difficulty) are centrally configured in the `src/gameConfig.ts` parameter file.
 

@@ -5,6 +5,8 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, Request
 from pydantic import BaseModel, Field
 
+from api.agent import generate_branches, generate_seed_stories
+
 load_dotenv(".env.local")
 
 app = FastAPI()
@@ -27,9 +29,6 @@ class GameState(BaseModel):
     selected_genres: list[str] | None = Field(default=None)
     selected_archetypes: list[str] | None = Field(default=None)
     selected_genre: str | None = Field(default=None)
-
-
-from api.agent import generate_branches, generate_seed_stories
 
 
 def check_rate_limit(client_ip: str):
