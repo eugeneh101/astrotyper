@@ -9,6 +9,7 @@ export class Bullet {
   radius: number;
   color: string;
   isDead: boolean = false;
+  hasHit: boolean = false;
 
   constructor(
     x: number,
@@ -113,8 +114,8 @@ export class DreadnoughtBoss extends Boss {
   strafeTime: number = 0;
   strafePattern: number = 0;
 
-  constructor(x: number, y: number) {
-    super(x, y, 100, 70);
+  constructor(x: number, y: number, maxHealth: number = 100) {
+    super(x, y, maxHealth, 70);
     this.startX = x;
   }
 
@@ -435,15 +436,15 @@ export class DreadnoughtBoss extends Boss {
 
 export class BioBoss extends Boss {
   danmakuTimer: number = 0;
-  mode: 'SHOOTING' | 'COOLDOWN' = 'SHOOTING';
+  mode: 'SHOOTING' | 'COOLDOWN' | 'LASER_CHARGE' | 'LASER_FIRING' = 'SHOOTING';
   modeTimer: number = 0;
   strafeTime: number = 0;
   strafePattern: number = 0;
   startX: number;
   interruptCharge: number = 0;
 
-  constructor(x: number, y: number) {
-    super(x, y, 100);
+  constructor(x: number, y: number, maxHealth: number = 100) {
+    super(x, y, maxHealth);
     this.startX = x;
   }
 
@@ -561,7 +562,7 @@ export class BioBoss extends Boss {
 
     // Draw multiple writhing tentacles first (underneath the body)
     ctx.strokeStyle = '#00ff44';
-    ctx.lineCap = 'level';
+    ctx.lineCap = 'round';
     for (let i = 0; i < 8; i++) {
       const angle = (i / 8) * Math.PI * 2 + this.time * 0.5;
       ctx.beginPath();

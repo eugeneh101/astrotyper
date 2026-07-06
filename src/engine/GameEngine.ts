@@ -990,7 +990,7 @@ export class GameEngine {
         }
 
         // Check for GAMEOVER after all enemy processing
-        if (this.health <= 0 && this.state !== 'GAMEOVER') {
+        if (this.health <= 0) {
             this.takeDamage(0); // Trigger the centralized death sequence
         }
 
