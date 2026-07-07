@@ -1,5 +1,7 @@
 # 🌌 AstroTyper: Infinite Odyssey 
 
+**🎮 [PLAY THE GAME LIVE HERE!](https://astrotyper.vercel.app)**
+
 Welcome to **AstroTyper: Infinite Odyssey** — an AI-driven Sci-Fi Typing RPG powered by the **Google GenAI SDK**. 
 
 This isn't your grandfather's typing game. It is a showcase of pure **Agentic Engineering**. Built from the ground up to demonstrate how Large Language Models (LLMs) can act as real-time, dynamic Game Masters, AstroTyper leverages structured Pydantic outputs and agentic workflows to seamlessly blend high-octane 60fps action with infinite AI storytelling.
@@ -26,6 +28,34 @@ This isn't your grandfather's typing game. It is a showcase of pure **Agentic En
 *   **Backend:** Python, FastAPI, Vercel Serverless Functions
 *   **AI:** Google Gemini API (via Google GenAI SDK)
 *   **Testing:** Jest (Canvas Engine Math), Python LLM Judge (Prompt Evaluation)
+
+### Architecture Diagram
+
+```mermaid
+graph TD
+    subgraph Frontend ["Frontend (Next.js)"]
+        UI["React User Interface"]
+        Canvas["HTML5 Physics Engine"]
+        Config["gameConfig.ts"]
+    end
+
+    subgraph Backend ["Backend (Vercel Serverless)"]
+        FastAPI["FastAPI /api/generate"]
+        Agent["Game Master Agent"]
+    end
+
+    subgraph External ["Google Cloud"]
+        Gemini["Google Gemini 3.1 API"]
+    end
+
+    UI -->|"Player keystrokes & WPM"| Canvas
+    Canvas -->|"GameState JSON"| FastAPI
+    FastAPI -->|"Rate Limiting & Validation"| Agent
+    Agent -->|"Structured Pydantic Prompt"| Gemini
+    Gemini -->|"JSON Narrative Branches"| Agent
+    Agent -->|"Sanitized JSON"| Canvas
+    Config -.->|"Game Tuning & Mechanics"| Canvas
+```
 
 ---
 
